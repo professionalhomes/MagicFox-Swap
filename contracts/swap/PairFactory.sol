@@ -12,14 +12,14 @@ contract PairFactory is IPairFactory {
     }
 
     bool public isPaused;
-    address public pauser;
-    address public pendingPauser;
 
     uint256 public stableFee;
     uint256 public volatileFee;
+    uint256 public degenFee;
     uint256 public ownerFee;
     uint256 public MAX_PARTNER_FEE = 5000; // 50%
     uint256 public constant MAX_FEE = 25; // 0.25%
+    uint256 public constant MAX_DEGEN_FEE = 100; // 1%
 
     address public feeManager;
     address public pendingFeeManager;
@@ -37,12 +37,12 @@ contract PairFactory is IPairFactory {
     event PairCreated(address indexed token0, address indexed token1, bool stable, address pair, uint);
 
     constructor() {
-        pauser = msg.sender;
         isPaused = false;
         feeManager = msg.sender;
         ownerFeeHandler = msg.sender;
         stableFee = 4; // 0.04%
         volatileFee = 18; // 0.18%
+        degenFee = 100; // 1%
         ownerFee = 3000; // 30% of stable/volatileFee
     }
 
@@ -54,18 +54,8 @@ contract PairFactory is IPairFactory {
         return allPairs;
     }
 
-    function setPauser(address _pauser) external {
-        require(msg.sender == pauser);
-        pendingPauser = _pauser;
-    }
-
-    function acceptPauser() external {
-        require(msg.sender == pendingPauser);
-        pauser = pendingPauser;
-    }
-
     function setPause(bool _state) external {
-        require(msg.sender == pauser);
+        require(msg.sender == feeManager);
         isPaused = _state;
     }
 
@@ -113,8 +103,17 @@ contract PairFactory is IPairFactory {
         }
     }
 
-    function getFee(bool _stable) public view returns(uint256) {
-        return _stable ? stableFee : volatileFee;
+    function setDegenFee(uint256 _degen) external {
+        require(msg.sender == feeManager, 'not fee manager');
+        require(_degen <= MAX_DEGEN_FEE);
+        degenFee = _degen;
+    }
+
+    function getFee(bool _stable, bool _degen) public view returns(uint256) {
+        if (_stable) {
+            return stableFee;
+        }
+        return _degen ? degenFee : volatileFee;
     }
 
     function pairCodeHash() external pure returns (bytes32) {

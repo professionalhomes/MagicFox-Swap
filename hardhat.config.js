@@ -41,10 +41,28 @@ module.exports = {
               //viaIR : true,
             },
           },
-          /*{
-            version: "0.8.10",
-            settings: { }
-          }*/
+          {
+            version: "0.8.11",
+            settings: {
+              optimizer: {
+                enabled: true,
+                runs: 200,
+              },
+              outputSelection: {
+                "*": {
+                  "*": [
+                    "evm.bytecode",
+                    "evm.deployedBytecode",
+                    "devdoc",
+                    "userdoc",
+                    "metadata",
+                    "abi"
+                  ]
+                }
+              }
+              //viaIR : true,
+            },
+          }
         ]
       },
     networks: {

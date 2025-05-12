@@ -32,6 +32,8 @@ contract PairFees {
         if (amount1 > 0) _safeTransfer(token1, recipient, amount1);
     }
 
+   
+
     function processOwnerFees(uint amount, bool isTokenZero) external {
         require(msg.sender == pair);
         if(amount > 0 && isTokenZero){

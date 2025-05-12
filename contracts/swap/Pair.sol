@@ -161,12 +161,13 @@ contract Pair is IPair {
 
     // Accrue fees on token0
     function _update0(uint amount) internal {
-        // get referral fee
-        address _dibs = PairFactory(factory).dibs();
-        uint256 _maxRef = PairFactory(factory).MAX_REFERRAL_FEE();
-        uint256 _referralFee = amount * _maxRef / 10000;
-        _safeTransfer(token0, _dibs, _referralFee); // transfer the fees out to PairFees
-        amount -= _referralFee;
+        // get partner fee
+        (address _partner, uint256 _partnerFee) = PairFactory(factory).lpPartner(address(this));
+        if (_partner != address(0)) {
+            _partnerFee = amount * _partnerFee / 10000;
+            _safeTransfer(token0, _partner, _partnerFee); // transfer the fees out to partner
+            amount -= _partnerFee;
+        }
         
         // get lp and owner fee
         uint256 _ownerFee =  amount * PairFactory(factory).ownerFee() / 10000;
@@ -180,17 +181,18 @@ contract Pair is IPair {
         if (_ratio > 0) {
             index0 += _ratio;
         }
-        emit Fees(msg.sender, amount+_ownerFee+_referralFee, 0);
+        emit Fees(msg.sender, amount+_ownerFee+_partnerFee, 0);
     }
 
     // Accrue fees on token1
     function _update1(uint amount) internal {
-        // get referral fee
-        address _dibs = PairFactory(factory).dibs();
-        uint256 _maxRef = PairFactory(factory).MAX_REFERRAL_FEE();
-        uint256 _referralFee = amount * _maxRef / 10000;
-        _safeTransfer(token1, _dibs, _referralFee); // transfer the fees out to PairFees
-        amount -= _referralFee;
+        // get partner fee
+        (address _partner, uint256 _partnerFee) = PairFactory(factory).lpPartner(address(this));
+        if (_partner != address(0)) {
+            _partnerFee = amount * _partnerFee / 10000;
+            _safeTransfer(token1, _partner, _partnerFee); // transfer the fees out to partner
+            amount -= _partnerFee;
+        }
 
         // get lp and owner fee
         uint256 _ownerFee =  amount * PairFactory(factory).ownerFee() / 10000;
@@ -206,7 +208,7 @@ contract Pair is IPair {
             index1 += _ratio;
         }
 
-        emit Fees(msg.sender, 0,  amount+_ownerFee+_referralFee);
+        emit Fees(msg.sender, 0,  amount+_ownerFee+_partnerFee);
     }
 
     // this function MUST be called on any balance changes, otherwise can be used to infinitely claim fees

@@ -6,6 +6,11 @@ import './Pair.sol';
 
 contract PairFactory is IPairFactory {
 
+    struct Partner {
+        address partner;
+        uint256 fee;
+    }
+
     bool public isPaused;
     address public pauser;
     address public pendingPauser;
@@ -13,13 +18,13 @@ contract PairFactory is IPairFactory {
     uint256 public stableFee;
     uint256 public volatileFee;
     uint256 public ownerFee;
-    uint256 public MAX_REFERRAL_FEE = 1200; // 12%
+    uint256 public MAX_PARTNER_FEE = 5000; // 50%
     uint256 public constant MAX_FEE = 25; // 0.25%
 
     address public feeManager;
     address public pendingFeeManager;
-    address public dibs;                // referral fee handler
     address public ownerFeeHandler;   // owner fee handler
+    mapping(address => Partner) public lpPartner; // LP-address => Partner
 
     mapping(address => mapping(address => mapping(bool => address))) public getPair;
     address[] public allPairs;
@@ -87,17 +92,15 @@ contract PairFactory is IPairFactory {
         ownerFeeHandler = _feehandler;
     }
 
-    function setDibs(address _dibs) external {
+    function setPartner(address _lp, address _partner, uint256 _fee) external {
         require(msg.sender == feeManager, 'not fee manager');
-        require(_dibs != address(0), 'address zero');
-        dibs = _dibs;
+        require(_lp != address(0), 'address zero');
+        require(_fee <= MAX_PARTNER_FEE, 'fee too high');
+        lpPartner[_lp] = Partner({
+            partner: _partner,
+            fee: _fee
+        });
     }
-
-    function setReferralFee(uint256 _refFee) external {
-        require(msg.sender == feeManager, 'not fee manager');
-        MAX_REFERRAL_FEE = _refFee;
-    }
-
 
     function setFee(bool _stable, uint256 _fee) external {
         require(msg.sender == feeManager, 'not fee manager');

@@ -154,9 +154,9 @@ contract Pair is IPair {
         }
     }
 
-    function claimStakingFees() external {
-        address _feehandler = PairFactory(factory).stakingFeeHandler();
-        PairFees(fees).withdrawStakingFees(_feehandler);
+    function claimOwnerFees() external {
+        address _feehandler = PairFactory(factory).ownerFeeHandler();
+        PairFees(fees).withdrawOwnerFees(_feehandler);
     }
 
     // Accrue fees on token0
@@ -168,19 +168,19 @@ contract Pair is IPair {
         _safeTransfer(token0, _dibs, _referralFee); // transfer the fees out to PairFees
         amount -= _referralFee;
         
-        // get lp and staking fee
-        uint256 _stakingNftFee =  amount * PairFactory(factory).stakingNFTFee() / 10000;
-        PairFees(fees).processStakingFees(_stakingNftFee, true);
+        // get lp and owner fee
+        uint256 _ownerFee =  amount * PairFactory(factory).ownerFee() / 10000;
+        PairFees(fees).processOwnerFees(_ownerFee, true);
         _safeTransfer(token0, fees, amount); // transfer the fees out to PairFees
 
         
-        // remove staking fees from lpfees
-        amount -= _stakingNftFee;
+        // remove owner fees from lpfees
+        amount -= _ownerFee;
         uint256 _ratio = amount * 1e18 / totalSupply; // 1e18 adjustment is removed during claim
         if (_ratio > 0) {
             index0 += _ratio;
         }
-        emit Fees(msg.sender, amount+_stakingNftFee+_referralFee, 0);
+        emit Fees(msg.sender, amount+_ownerFee+_referralFee, 0);
     }
 
     // Accrue fees on token1
@@ -192,13 +192,13 @@ contract Pair is IPair {
         _safeTransfer(token1, _dibs, _referralFee); // transfer the fees out to PairFees
         amount -= _referralFee;
 
-        // get lp and staking fee
-        uint256 _stakingNftFee =  amount * PairFactory(factory).stakingNFTFee() / 10000;
-        PairFees(fees).processStakingFees(_stakingNftFee, false);
+        // get lp and owner fee
+        uint256 _ownerFee =  amount * PairFactory(factory).ownerFee() / 10000;
+        PairFees(fees).processOwnerFees(_ownerFee, false);
         _safeTransfer(token1, fees, amount); // transfer the fees out to PairFees
 
-        // remove staking fees from lpfees
-        amount -= _stakingNftFee;
+        // remove owner fees from lpfees
+        amount -= _ownerFee;
 
         uint256 _ratio = amount * 1e18 / totalSupply;
 
@@ -206,7 +206,7 @@ contract Pair is IPair {
             index1 += _ratio;
         }
 
-        emit Fees(msg.sender, 0,  amount+_stakingNftFee+_referralFee);
+        emit Fees(msg.sender, 0,  amount+_ownerFee+_referralFee);
     }
 
     // this function MUST be called on any balance changes, otherwise can be used to infinitely claim fees

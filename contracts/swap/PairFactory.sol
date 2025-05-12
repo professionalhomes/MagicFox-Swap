@@ -12,14 +12,14 @@ contract PairFactory is IPairFactory {
 
     uint256 public stableFee;
     uint256 public volatileFee;
-    uint256 public stakingNFTFee;
+    uint256 public ownerFee;
     uint256 public MAX_REFERRAL_FEE = 1200; // 12%
     uint256 public constant MAX_FEE = 25; // 0.25%
 
     address public feeManager;
     address public pendingFeeManager;
     address public dibs;                // referral fee handler
-    address public stakingFeeHandler;   // staking fee handler
+    address public ownerFeeHandler;   // owner fee handler
 
     mapping(address => mapping(address => mapping(bool => address))) public getPair;
     address[] public allPairs;
@@ -35,9 +35,10 @@ contract PairFactory is IPairFactory {
         pauser = msg.sender;
         isPaused = false;
         feeManager = msg.sender;
+        ownerFeeHandler = msg.sender;
         stableFee = 4; // 0.04%
         volatileFee = 18; // 0.18%
-        stakingNFTFee = 3000; // 30% of stable/volatileFee
+        ownerFee = 3000; // 30% of stable/volatileFee
     }
 
     function allPairsLength() external view returns (uint) {
@@ -74,16 +75,16 @@ contract PairFactory is IPairFactory {
     }
 
 
-    function setStakingFees(uint256 _newFee) external {
+    function setOwnerFee(uint256 _newFee) external {
         require(msg.sender == feeManager, 'not fee manager');
         require(_newFee <= 3000);
-        stakingNFTFee = _newFee;
+        ownerFee = _newFee;
     }
 
-    function setStakingFeeAddress(address _feehandler) external {
+    function setOwnerFeeAddress(address _feehandler) external {
         require(msg.sender == feeManager, 'not fee manager');
         require(_feehandler != address(0), 'addr 0');
-        stakingFeeHandler = _feehandler;
+        ownerFeeHandler = _feehandler;
     }
 
     function setDibs(address _dibs) external {

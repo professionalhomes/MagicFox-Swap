@@ -19,6 +19,7 @@ contract Pair is IPair {
 
     // Used to denote stable or volatile pair, not immutable since construction happens in the initialize method for CREATE2 deterministic addresses
     bool public immutable stable;
+    bool public degen;
 
     uint public totalSupply = 0;
 
@@ -157,6 +158,11 @@ contract Pair is IPair {
     function claimOwnerFees() external {
         address _feehandler = PairFactory(factory).ownerFeeHandler();
         PairFees(fees).withdrawOwnerFees(_feehandler);
+    }
+
+    function flipDegen() external {
+        require(msg.sender == PairFactory(factory).feeManager(), 'not fee manager');
+        degen = !degen;
     }
 
     // Accrue fees on token0
@@ -402,8 +408,8 @@ contract Pair is IPair {
 
         { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
         (address _token0, address _token1) = (token0, token1);
-        if (amount0In > 0) _update0(amount0In * PairFactory(factory).getFee(stable) / 10000); // accrue fees for token0 and move them out of pool
-        if (amount1In > 0) _update1(amount1In * PairFactory(factory).getFee(stable) / 10000); // accrue fees for token1 and move them out of pool
+        if (amount0In > 0) _update0(amount0In * PairFactory(factory).getFee(stable, degen) / 10000); // accrue fees for token0 and move them out of pool
+        if (amount1In > 0) _update1(amount1In * PairFactory(factory).getFee(stable, degen) / 10000); // accrue fees for token1 and move them out of pool
         _balance0 = IERC20(_token0).balanceOf(address(this)); // since we removed tokens, we need to reconfirm balances, can also simply use previous balance - amountIn/ 10000, but doing balanceOf again as safety check
         _balance1 = IERC20(_token1).balanceOf(address(this));
         // The curve, either x3y+y3x for stable pools, or x*y for volatile pools
@@ -460,7 +466,7 @@ contract Pair is IPair {
 
     function getAmountOut(uint amountIn, address tokenIn) external view returns (uint) {
         (uint _reserve0, uint _reserve1) = (reserve0, reserve1);
-        amountIn -= amountIn * PairFactory(factory).getFee(stable) / 10000; // remove fee from amount received
+        amountIn -= amountIn * PairFactory(factory).getFee(stable, degen) / 10000; // remove fee from amount received
         return _getAmountOut(amountIn, tokenIn, _reserve0, _reserve1);
     }
 

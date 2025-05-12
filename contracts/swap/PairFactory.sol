@@ -110,10 +110,10 @@ contract PairFactory is IPairFactory {
     }
 
     function getFee(bool _stable, bool _degen) public view returns(uint256) {
-        if (_degen) {
-            return degenFee;
+        if (_stable) {
+            return stableFee;
         }
-        return _stable ? stableFee : volatileFee;
+        return _degen ? degenFee : volatileFee;
     }
 
     function pairCodeHash() external pure returns (bytes32) {

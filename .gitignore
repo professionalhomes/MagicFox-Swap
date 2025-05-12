@@ -1,0 +1,5 @@
+secret.json
+node_modules/
+artifacts/
+cache/
+.tmp_salts_*

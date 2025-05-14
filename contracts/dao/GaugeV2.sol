@@ -334,8 +334,8 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
         (claimed0, claimed1) = IPair(_token).claimFees();
 
         if (claimed0 > 0 || claimed1 > 0) {
-            uint fees0 = fees0 + claimed0;
-            uint fees1 = fees1 + claimed1;
+            uint _fees0 = fees0 + claimed0;
+            uint _fees1 = fees1 + claimed1;
             (address _token0, address _token1) = IPair(_token).tokens();
 
             if (_fees0  > 0) {

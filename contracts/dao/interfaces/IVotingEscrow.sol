@@ -46,6 +46,8 @@ interface IVotingEscrow {
     function totalSupply() external view returns (uint);
     function supply() external view returns (uint);
 
-
     function decimals() external view returns(uint8);
+
+    function voter() external view returns (address);
+    function getVotes(address) external view returns (uint);
 }

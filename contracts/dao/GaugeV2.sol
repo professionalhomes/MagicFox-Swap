@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import './interfaces/IVoter.sol';
+import './interfaces/IVotingEscrow.sol';
 import './interfaces/IPair.sol';
 import './interfaces/IBribe.sol';
 import "./libraries/Math.sol";
@@ -31,7 +33,7 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
 
 
     IERC20 public rewardToken;
-    IERC20 public _VE;
+    IVotingEscrow public _VE;
     IERC20 public TOKEN;
 
     address public DISTRIBUTION;
@@ -53,7 +55,12 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
     mapping(address => uint256) public rewards;
 
     uint256 public _totalSupply;
-    mapping(address => uint256) public _balances;
+    mapping(address => uint256) public balances;
+
+    uint256 public derivedSupply;
+    mapping(address => uint256) public derivedBalances;
+
+    mapping(address => uint256) public tokenIds;
 
     event RewardAdded(uint256 reward);
     event Deposit(address indexed user, uint256 amount);
@@ -78,7 +85,7 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
 
     constructor(address _rewardToken,address _ve,address _token,address _distribution, address _internal_bribe, address _external_bribe, bool _isForPair) {
         rewardToken = IERC20(_rewardToken);     // main reward
-        _VE = IERC20(_ve);                      // vested
+        _VE = IVotingEscrow(_ve);               // vested
         TOKEN = IERC20(_token);                 // underlying (LP)
         DISTRIBUTION = _distribution;           // distro address (voter)
         DURATION = 7 * 86400;                    // distro time
@@ -118,7 +125,7 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
 
     ///@notice balance of a user
     function balanceOf(address account) external view returns (uint256) {
-        return _balances[account];
+        return balances[account];
     }
 
     ///@notice last time reward
@@ -137,7 +144,7 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
 
     ///@notice see earned rewards for user
     function earned(address account) public view returns (uint256) {
-        return _balances[account].mul(rewardPerToken().sub(userRewardPerTokenPaid[account])).div(1e18).add(rewards[account]);
+        return derivedBalances[account].mul(rewardPerToken().sub(userRewardPerTokenPaid[account])).div(1e18).add(rewards[account]);
     }
 
     ///@notice get total reward for the duration
@@ -147,26 +154,43 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
 
 
     ///@notice deposit all TOKEN of msg.sender
-    function depositAll() external {
-        _deposit(TOKEN.balanceOf(msg.sender), msg.sender);
+    function depositAll(uint256 tokenId) external {
+        _deposit(TOKEN.balanceOf(msg.sender), msg.sender, tokenId);
     }
 
-    ///@notice deposit amount TOKEN
-    function deposit(uint256 amount) external {
-        _deposit(amount, msg.sender);
+    ///@notice deposit amount TOKEN 
+    function deposit(uint256 amount, uint256 tokenId) external {
+        _deposit(amount, msg.sender, tokenId);
     }
 
     ///@notice deposit internal
-    function _deposit(uint256 amount, address account) internal nonReentrant updateReward(account) {
+    function _deposit(uint256 amount, address account, uint256 tokenId) internal nonReentrant updateReward(account) {
         require(amount > 0, "deposit(Gauge): cannot stake 0");
 
-        _balances[account] = _balances[account].add(amount);
+        balances[account] = balances[account].add(amount);
         _totalSupply = _totalSupply.add(amount);
 
         TOKEN.safeTransferFrom(account, address(this), amount);
 
+        if (tokenId > 0) {
+            require(_VE.ownerOf(tokenId) == account);
+            if (tokenIds[account] == 0) {
+                tokenIds[account] = tokenId;
+                IVoter(_VE.voter()).attachTokenToGauge(tokenId, account);
+            }
+            require(tokenIds[account] == tokenId);
+        } else {
+            tokenId = tokenIds[account];
+        }
+
+        uint _derivedBalance = derivedBalances[account];
+        derivedSupply -= _derivedBalance;
+        _derivedBalance = derivedBalance(account);
+        derivedBalances[account] = _derivedBalance;
+        derivedSupply += _derivedBalance;
+
         if (address(gaugeRewarder) != address(0)) {
-            IRewarder(gaugeRewarder).onReward(rewarderPid, account, account, 0, _balances[account]);
+            IRewarder(gaugeRewarder).onReward(rewarderPid, account, account, 0, balances[account]);
         }
 
         emit Deposit(account, amount);
@@ -174,39 +198,82 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
 
     ///@notice withdraw all token
     function withdrawAll() external {
-        _withdraw(_balances[msg.sender]);
+        withdraw(balances[msg.sender]);
     }
 
     ///@notice withdraw a certain amount of TOKEN
-    function withdraw(uint256 amount) external {
-        _withdraw(amount);
+    function withdraw(uint256 amount) public {
+        uint256 tokenId = 0;
+        if (amount == balances[msg.sender]) {
+            tokenId = tokenIds[msg.sender];
+        }
+        _withdrawToken(amount, tokenId);
     }
 
-    ///@notice withdar internal
-    function _withdraw(uint256 amount) internal nonReentrant updateReward(msg.sender) {
-        require(amount > 0, "Cannot withdraw 0");
+    ///@notice withdraw a certain amount of TOKEN
+    function withdrawToken(uint256 amount, uint256 tokenId) external {
+        _withdrawToken(amount, tokenId);
+    }
+
+    ///@notice withdraw internal
+    function _withdrawToken(uint256 amount, uint256 tokenId) internal nonReentrant updateReward(msg.sender) {
         require(_totalSupply.sub(amount) >= 0, "supply < 0");
-        require(_balances[msg.sender] > 0, "no balances");
+        require(balances[msg.sender] > 0, "no balances");
 
         _totalSupply = _totalSupply.sub(amount);
-        _balances[msg.sender] = _balances[msg.sender].sub(amount);
+        balances[msg.sender] = balances[msg.sender].sub(amount);
 
         if (address(gaugeRewarder) != address(0)) {
-            IRewarder(gaugeRewarder).onReward(rewarderPid, msg.sender, msg.sender, 0, _balances[msg.sender]);
+            IRewarder(gaugeRewarder).onReward(rewarderPid, msg.sender, msg.sender, 0, balances[msg.sender]);
         }
 
         TOKEN.safeTransfer(msg.sender, amount);
 
+        if (tokenId > 0) {
+            require(tokenId == tokenIds[msg.sender]);
+            tokenIds[msg.sender] = 0;
+            IVoter(_VE.voter()).detachTokenFromGauge(tokenId, msg.sender);
+        } else {
+            tokenId = tokenIds[msg.sender];
+        }
+
+        uint _derivedBalance = derivedBalances[msg.sender];
+        derivedSupply -= _derivedBalance;
+        _derivedBalance = derivedBalance(msg.sender);
+        derivedBalances[msg.sender] = _derivedBalance;
+        derivedSupply += _derivedBalance;
+
         emit Withdraw(msg.sender, amount);
     }
 
+    function derivedBalance(address account) public view returns (uint) {
+        uint _tokenId = tokenIds[account];
+        uint _balance = balances[account];
+        uint _derived = _balance * 40 / 100;
+        uint _adjusted = 0;
+        uint _supply = _VE.totalSupply();
+        if (account == _VE.ownerOf(_tokenId) && _supply > 0) {
+            _adjusted = _VE.balanceOfNFT(_tokenId);
+            _adjusted = (_totalSupply * _adjusted / _supply) * 60 / 100;
+        }
+        return Math.min((_derived + _adjusted), _balance);
+    }
 
     ///@notice withdraw all TOKEN and harvest rewardToken
     function withdrawAllAndHarvest() external {
-        _withdraw(_balances[msg.sender]);
+        withdraw(balances[msg.sender]);
         getReward();
     }
 
+    function updateDerivedBalance() external updateReward(msg.sender) {
+        require(balances[msg.sender] > 0, "no balances");
+
+        uint _derivedBalance = derivedBalances[msg.sender];
+        derivedSupply -= _derivedBalance;
+        _derivedBalance = derivedBalance(msg.sender);
+        derivedBalances[msg.sender] = _derivedBalance;
+        derivedSupply += _derivedBalance;
+    }
  
     ///@notice User harvest function
     function getReward() public nonReentrant updateReward(msg.sender) {
@@ -218,7 +285,7 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
         }
 
         if (gaugeRewarder != address(0)) {
-            IRewarder(gaugeRewarder).onReward(rewarderPid, msg.sender, msg.sender, reward, _balances[msg.sender]);
+            IRewarder(gaugeRewarder).onReward(rewarderPid, msg.sender, msg.sender, reward, balances[msg.sender]);
         }
     }
 

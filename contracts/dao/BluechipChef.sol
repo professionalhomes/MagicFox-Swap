@@ -18,7 +18,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 
-contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
+contract BluechipChef is IVoter, Ownable, ReentrancyGuard {
 
     address public _ve; // the ve token that governs these contracts
     address public factory; // the PairFactory
@@ -29,6 +29,7 @@ contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
     address public minter;
     address public governor; // should be set to an IGovernor
     address public emergencyCouncil; // credibly neutral party similar to Curve's Emergency DAO
+    uint internal constant VOTER_TOKEN_ID = 1;
 
     uint internal index;
     mapping(address => uint) internal supplyIndex;
@@ -98,60 +99,57 @@ contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
         emergencyCouncil = _council;
     }
 
-    function reset(uint _tokenId) external nonReentrant {
-        //require((block.timestamp / DURATION) * DURATION > lastVoted[_tokenId], "TOKEN_ALREADY_VOTED_THIS_EPOCH");
-        require(IVotingEscrow(_ve).isApprovedOrOwner(msg.sender, _tokenId));
-        lastVoted[_tokenId] = block.timestamp;
-        _reset(_tokenId);
-        IVotingEscrow(_ve).abstain(_tokenId);
+    function reset() external onlyOwner nonReentrant {
+        //require((block.timestamp / DURATION) * DURATION > lastVoted[VOTER_TOKEN_ID], "TOKEN_ALREADY_VOTED_THIS_EPOCH");
+        lastVoted[VOTER_TOKEN_ID] = block.timestamp;
+        _reset(VOTER_TOKEN_ID);
     }
 
-    function _reset(uint _tokenId) internal {
-        address[] storage _poolVote = poolVote[_tokenId];
+    function _reset() internal {
+        address[] storage _poolVote = poolVote[VOTER_TOKEN_ID];
         uint _poolVoteCnt = _poolVote.length;
         uint256 _totalWeight = 0;
 
         for (uint i = 0; i < _poolVoteCnt; i ++) {
             address _pool = _poolVote[i];
-            uint256 _votes = votes[_tokenId][_pool];
+            uint256 _votes = votes[VOTER_TOKEN_ID][_pool];
 
             if (_votes != 0) {
                 _updateFor(gauges[_pool]);
                 weights[_pool] -= _votes;
-                votes[_tokenId][_pool] -= _votes;
+                votes[VOTER_TOKEN_ID][_pool] -= _votes;
                 if (_votes > 0) {
-                    IBribe(internal_bribes[gauges[_pool]])._withdraw(uint256(_votes), _tokenId);
-                    IBribe(external_bribes[gauges[_pool]])._withdraw(uint256(_votes), _tokenId);
+                    IBribe(internal_bribes[gauges[_pool]])._withdraw(uint256(_votes), VOTER_TOKEN_ID);
+                    IBribe(external_bribes[gauges[_pool]])._withdraw(uint256(_votes), VOTER_TOKEN_ID);
                     _totalWeight += _votes;
                 } else {
                     _totalWeight -= _votes;
                 }
-                emit Abstained(_tokenId, _votes);
+                emit Abstained(VOTER_TOKEN_ID, _votes);
             }
         }
         totalWeight -= uint256(_totalWeight);
-        usedWeights[_tokenId] = 0;
-        delete poolVote[_tokenId];
+        usedWeights[VOTER_TOKEN_ID] = 0;
+        delete poolVote[VOTER_TOKEN_ID];
     }
 
-    function poke(uint _tokenId) external nonReentrant {
-        //require((block.timestamp / DURATION) * DURATION > lastVoted[_tokenId], "TOKEN_ALREADY_VOTED_THIS_EPOCH");
-        require(IVotingEscrow(_ve).isApprovedOrOwner(msg.sender, _tokenId));
-        address[] memory _poolVote = poolVote[_tokenId];
+    function poke() external onlyOwner nonReentrant {
+        //require((block.timestamp / DURATION) * DURATION > lastVoted[VOTER_TOKEN_ID], "TOKEN_ALREADY_VOTED_THIS_EPOCH");
+        address[] memory _poolVote = poolVote[VOTER_TOKEN_ID];
         uint _poolCnt = _poolVote.length;
         uint256[] memory _weights = new uint256[](_poolCnt);
 
         for (uint i = 0; i < _poolCnt; i ++) {
-            _weights[i] = votes[_tokenId][_poolVote[i]];
+            _weights[i] = votes[VOTER_TOKEN_ID][_poolVote[i]];
         }
 
-        _vote(_tokenId, _poolVote, _weights);
+        _vote(VOTER_TOKEN_ID, _poolVote, _weights);
     }
 
-    function _vote(uint _tokenId, address[] memory _poolVote, uint256[] memory _weights) internal {
-        _reset(_tokenId);
+    function _vote(address[] memory _poolVote, uint256[] memory _weights) internal {
+        _reset(VOTER_TOKEN_ID);
         uint _poolCnt = _poolVote.length;
-        uint256 _weight = IVotingEscrow(_ve).balanceOfNFT(_tokenId);
+        uint256 _weight = 1 * 1e18;
         uint256 _totalVoteWeight = 0;
         uint256 _totalWeight = 0;
         uint256 _usedWeight = 0;
@@ -166,33 +164,32 @@ contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
 
             if (isGauge[_gauge]) {
                 uint256 _poolWeight = _weights[i] * _weight / _totalVoteWeight;
-                require(votes[_tokenId][_pool] == 0);
+                require(votes[VOTER_TOKEN_ID][_pool] == 0);
                 require(_poolWeight != 0);
                 _updateFor(_gauge);
 
-                poolVote[_tokenId].push(_pool);
+                poolVote[VOTER_TOKEN_ID].push(_pool);
 
                 weights[_pool] += _poolWeight;
-                votes[_tokenId][_pool] += _poolWeight;
-                IBribe(internal_bribes[_gauge])._deposit(uint256(_poolWeight), _tokenId);
-                IBribe(external_bribes[_gauge])._deposit(uint256(_poolWeight), _tokenId);
+                votes[VOTER_TOKEN_ID][_pool] += _poolWeight;
+                IBribe(internal_bribes[_gauge])._deposit(uint256(_poolWeight), VOTER_TOKEN_ID);
+                IBribe(external_bribes[_gauge])._deposit(uint256(_poolWeight), VOTER_TOKEN_ID);
                 _usedWeight += _poolWeight;
                 _totalWeight += _poolWeight;
-                emit Voted(msg.sender, _tokenId, _poolWeight);
+                emit Voted(msg.sender, VOTER_TOKEN_ID, _poolWeight);
             }
         }
-        if (_usedWeight > 0) IVotingEscrow(_ve).voting(_tokenId);
+        
         totalWeight += uint256(_totalWeight);
-        usedWeights[_tokenId] = uint256(_usedWeight);
+        usedWeights[VOTER_TOKEN_ID] = uint256(_usedWeight);
     }
 
 
-    function vote(uint _tokenId, address[] calldata _poolVote, uint256[] calldata _weights) external nonReentrant {
-        //require((block.timestamp / DURATION) * DURATION > lastVoted[_tokenId], "TOKEN_ALREADY_VOTED_THIS_EPOCH");
-        require(IVotingEscrow(_ve).isApprovedOrOwner(msg.sender, _tokenId));
+    function vote(address[] calldata _poolVote, uint256[] calldata _weights) external onlyOwner nonReentrant {
+        //require((block.timestamp / DURATION) * DURATION > lastVoted[VOTER_TOKEN_ID], "TOKEN_ALREADY_VOTED_THIS_EPOCH");
         require(_poolVote.length == _weights.length);
-        lastVoted[_tokenId] = block.timestamp;
-        _vote(_tokenId, _poolVote, _weights);
+        lastVoted[VOTER_TOKEN_ID] = block.timestamp;
+        _vote(VOTER_TOKEN_ID, _poolVote, _weights);
     }
 
     function whitelist(address _token) public {

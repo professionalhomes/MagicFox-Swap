@@ -40,6 +40,7 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
     address public gaugeRewarder;
     address public internal_bribe;
     address public external_bribe;
+    address public fees_collector;
 
     uint256 public rewarderPid;
     uint256 public DURATION;
@@ -83,15 +84,17 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
         _;
     }
 
-    constructor(address _rewardToken,address _ve,address _token,address _distribution, address _internal_bribe, address _external_bribe, bool _isForPair) {
+    constructor(address _rewardToken,address _ve,address _token,address _distribution, address _internal_bribe, address _external_bribe, address _fees_collector, bool _isForPair) {
+        require(_internal_bribe == address(0) || _fees_collector == address(0), "invalid fee address");
         rewardToken = IERC20(_rewardToken);     // main reward
         _VE = IVotingEscrow(_ve);               // vested
         TOKEN = IERC20(_token);                 // underlying (LP)
         DISTRIBUTION = _distribution;           // distro address (voter)
         DURATION = 7 * 86400;                    // distro time
 
-        internal_bribe = _internal_bribe;       // lp fees goes here
-        external_bribe = _external_bribe;       // bribe fees goes here
+        internal_bribe = _internal_bribe;       // lp fees go here or to fees_collector
+        external_bribe = _external_bribe;       // bribe fees go here
+        fees_collector = _fees_collector;       // lp fees go here or to internal_bribe
 
         isForPair = _isForPair;                       // pair boolean, if false no claim_fees
 
@@ -331,14 +334,18 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
         (claimed0, claimed1) = IPair(_token).claimFees();
 
         if (claimed0 > 0 || claimed1 > 0) {
-            uint _fees0 = fees0 + claimed0;
-            uint _fees1 = fees1 + claimed1;
+            uint fees0 = fees0 + claimed0;
+            uint fees1 = fees1 + claimed1;
             (address _token0, address _token1) = IPair(_token).tokens();
 
             if (_fees0  > 0) {
                 fees0 = 0;
-                IERC20(_token0).approve(internal_bribe, _fees0);
-                IBribe(internal_bribe).notifyRewardAmount(_token0, _fees0);
+                if (fees_collector != address(0) && internal_bribe == address(0)) {
+                    IERC20(_token0).safeTransfer(fees_collector, _fees0);
+                } else {
+                    IERC20(_token0).approve(internal_bribe, _fees0);
+                    IBribe(internal_bribe).notifyRewardAmount(_token0, _fees0);
+                }
             } else {
                 fees0 = _fees0;
             }
@@ -346,8 +353,13 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
 
             if (_fees1  > 0) {
                 fees1 = 0;
-                IERC20(_token1).approve(internal_bribe, _fees1);
-                IBribe(internal_bribe).notifyRewardAmount(_token1, _fees1);
+                if (fees_collector != address(0) && internal_bribe == address(0)) {
+                    IERC20(_token1).safeTransfer(fees_collector, _fees1);
+                } else {
+                    IERC20(_token1).approve(internal_bribe, _fees1);
+                    IBribe(internal_bribe).notifyRewardAmount(_token1, _fees1);
+                }
+                
             } else {
                 fees1 = _fees1;
             }
@@ -356,7 +368,5 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
             emit ClaimFees(msg.sender, claimed0, claimed1);
         }
     }
-
-
 
 }

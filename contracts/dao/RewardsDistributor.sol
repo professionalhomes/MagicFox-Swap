@@ -43,24 +43,20 @@ contract RewardsDistributor is IRewardsDistributor {
 
     address public owner;
     address public voting_escrow;
-    address public veUnderlying;
     address public token;
     address public depositor;
 
-    constructor(address _voting_escrow, address _token) {
+    constructor(address _voting_escrow) {
         uint _t = block.timestamp / WEEK * WEEK;
         start_time = _t;
         last_token_time = _t;
         time_cursor = _t;
+        address _token = IVotingEscrow(_voting_escrow).token();
         token = _token;
         voting_escrow = _voting_escrow;
-        depositor = msg.sender;
+        depositor = msg.sender; //0x86069feb223ee303085a1a505892c9d4bdbee996
         owner = msg.sender;
-        veUnderlying = IVotingEscrow(_voting_escrow).token();
-
-        if (token == veUnderlying) {
-            require(IERC20(token).approve(_voting_escrow, type(uint).max));
-        }
+        require(IERC20(_token).approve(_voting_escrow, type(uint).max));
     }
 
     function timestamp() external view returns (uint) {
@@ -291,9 +287,9 @@ contract RewardsDistributor is IRewardsDistributor {
         _last_token_time = _last_token_time / WEEK * WEEK;
         uint amount = _claim(_tokenId, voting_escrow, _last_token_time);
         if (amount != 0) {
-            // if not veUnderlying or locked.end then send directly
+            // if locked.end then send directly
             IVotingEscrow.LockedBalance memory _locked = IVotingEscrow(voting_escrow).locked(_tokenId);
-            if(token != veUnderlying || _locked.end < block.timestamp){
+            if(_locked.end < block.timestamp){
                 address _nftOwner = IVotingEscrow(voting_escrow).ownerOf(_tokenId);
                 IERC20(token).transfer(_nftOwner, amount);
             } else {
@@ -318,7 +314,7 @@ contract RewardsDistributor is IRewardsDistributor {
             if (amount != 0) {
                 // if locked.end then send directly
                 IVotingEscrow.LockedBalance memory _locked = IVotingEscrow(_voting_escrow).locked(_tokenId);
-                if(token != veUnderlying || _locked.end < block.timestamp){
+                if(_locked.end < block.timestamp){
                     address _nftOwner = IVotingEscrow(_voting_escrow).ownerOf(_tokenId);
                     IERC20(token).transfer(_nftOwner, amount);
                 } else {

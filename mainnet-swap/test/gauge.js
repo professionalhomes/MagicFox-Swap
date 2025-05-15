@@ -150,7 +150,7 @@ describe("Gauge", function() {
     await testTokens[0].connect(investor2).approve(gauge0.address, ethers.constants.MaxUint256);
     await testTokens[1].connect(investor1).approve(gauge1.address, ethers.constants.MaxUint256);
     // gauge 0
-    await gauge0.connect(investor1).depositAll(0);
+    await gauge0.connect(investor1).depositAll(0); // leave it like this, to check if boosting works
     await gauge0.connect(investor2).depositAll(NFT2);
     // gauge 1
     await gauge1.connect(investor1).depositAll(NFT1);

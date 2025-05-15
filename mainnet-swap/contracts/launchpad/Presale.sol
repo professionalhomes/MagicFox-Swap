@@ -17,11 +17,12 @@ contract Presale is Ownable, ReentrancyGuard {
   using SafeERC20 for IERC20;
 
   struct UserInfo {
-    uint256 allocation; // amount taken into account to obtain FOX/SHROOM (amount spent + discount)
+    uint256 allocationFOX; // amount taken into account to obtain FOX (amount spent + discount)
+    uint256 allocationSHROOM; // amount taken into account to obtain SHROOM (amount spent + discount)
     uint256 contribution; // amount spent to buy FOX/SHROOM
 
-    uint256 discount; // discount % for this user
-    uint256 discountEligibleAmount; // max contribution amount eligible for a discount
+    // uint256 discount; // discount % for this user
+    // uint256 discountEligibleAmount; // max contribution amount eligible for a discount
 
     address ref; // referral for this account
     uint256 refEarnings; // referral earnings made by this account
@@ -46,7 +47,8 @@ contract Presale is Ownable, ReentrancyGuard {
 
   mapping(address => UserInfo) public userInfo; // buyers and referrers info
   uint256 public totalRaised; // raised amount, does not take into account referral shares
-  uint256 public totalAllocation; // takes into account discounts
+  uint256 public totalAllocationFOX; // takes into account discounts
+  uint256 public totalAllocationSHROOM; // takes into account discounts
 
   uint256 public constant MAX_FOX_TO_DISTRIBUTE = 1_558_822 ether; // max FOX amount to distribute during the sale
   uint256 public constant MAX_SHROOM_TO_DISTRIBUTE = 3_116_000 ether; // max SHROOM amount to distribute during the sale
@@ -164,17 +166,17 @@ contract Presale is Ownable, ReentrancyGuard {
     view 
     returns (uint256 foxAmt, uint256 veFoxAmt, uint256 shroomAmt, uint256 veShroomAmt) 
   {
-    if(totalAllocation == 0) return (0, 0, 0, 0);
+    if(totalAllocationFOX == 0) return (0, 0, 0, 0);
 
     UserInfo memory user = userInfo[account];
 
     // calc FOX/veFOX
-    uint256 totalFoxAmount = user.allocation.mul(MAX_FOX_TO_DISTRIBUTE).div(totalAllocation);
+    uint256 totalFoxAmount = user.allocationFOX.mul(MAX_FOX_TO_DISTRIBUTE).div(totalAllocationFOX);
     veFoxAmt = totalFoxAmount.mul(VE_TOKEN_SHARE).div(100);
     foxAmt = totalFoxAmount.sub(veFoxAmt);
 
     // calc SHROOM/veSHROOM
-    uint256 totalShroomAmount = user.allocation.mul(MAX_SHROOM_TO_DISTRIBUTE).div(totalAllocation);
+    uint256 totalShroomAmount = user.allocationSHROOM.mul(MAX_SHROOM_TO_DISTRIBUTE).div(totalAllocationSHROOM);
     veShroomAmt = totalShroomAmount.mul(VE_TOKEN_SHARE).div(100);
     shroomAmt = totalShroomAmount.sub(veShroomAmt);
   }
@@ -193,7 +195,7 @@ contract Presale is Ownable, ReentrancyGuard {
     UserInfo storage user = userInfo[msg.sender];
 
     // handle user's referral
-    if (user.allocation == 0 && user.ref == address(0) && referralAddress != address(0) && referralAddress != msg.sender) {
+    if (user.allocationFOX == 0 && user.ref == address(0) && referralAddress != address(0) && referralAddress != msg.sender) {
       // If first buy, and does not have any ref already set
       user.ref = referralAddress;
     }
@@ -212,25 +214,21 @@ contract Presale is Ownable, ReentrancyGuard {
       emit NewRefEarning(referralAddress, refShareAmount);
     }
 
-    uint256 allocation = amount;
-    if (user.discount > 0 && user.contribution < user.discountEligibleAmount) {
-
-      // Get eligible amount for the active user's discount
-      uint256 discountEligibleAmount = user.discountEligibleAmount.sub(user.contribution);
-      if (discountEligibleAmount > amount) {
-        discountEligibleAmount = amount;
-      }
-      // Readjust user new allocation
-      allocation = allocation.add(discountEligibleAmount.mul(user.discount).div(100));
-    }
+    // 70% in FOX
+    uint256 allocationFOX = amount.mul(70).div(100);
+    // 30% in SHROOM
+    uint256 allocationSHROOM = amount - allocationFOX;
 
     // update raised amounts
     user.contribution = user.contribution.add(amount);
     totalRaised = totalRaised.add(amount);
 
     // update allocations
-    user.allocation = user.allocation.add(allocation);
-    totalAllocation = totalAllocation.add(allocation);
+    user.allocationFOX = user.allocationFOX.add(allocationFOX);
+    totalAllocationFOX = totalAllocationFOX.add(allocationFOX);
+
+    user.allocationSHROOM = user.allocationSHROOM.add(allocationSHROOM);
+    totalAllocationSHROOM = totalAllocationSHROOM.add(allocationSHROOM);
 
     emit Buy(msg.sender, amount);
     // transfer contribution to treasury
@@ -258,7 +256,7 @@ contract Presale is Ownable, ReentrancyGuard {
   function claim() external isClaimable {
     UserInfo storage user = userInfo[msg.sender];
 
-    require(totalAllocation > 0 && user.allocation > 0, "claim: zero allocation");
+    require(totalAllocationFOX > 0 && user.allocationFOX > 0, "claim: zero allocation");
     require(!user.hasClaimed, "claim: already claimed");
     user.hasClaimed = true;
 

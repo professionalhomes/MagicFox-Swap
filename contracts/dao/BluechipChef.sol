@@ -428,5 +428,10 @@ contract BluechipChef is IBluechipChef, Ownable, ReentrancyGuard {
         IERC20(base).approve(_gauge, 0);
         IERC20(base).approve(_gauge, type(uint).max);
     }
-    
+
+    function setFeesCollector(address _fees_collector) external {
+        require(msg.sender == emergencyCouncil);
+        fees_collector = _fees_collector; 
+    }
+
 }

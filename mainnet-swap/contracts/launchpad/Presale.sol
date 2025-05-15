@@ -8,12 +8,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-interface IXGrailToken is IERC20 {
-  function usageAllocations(address userAddress, address usageAddress) external view returns (uint256 allocation);
-
-  function allocateFromUsage(address userAddress, uint256 amount) external;
-  function convertTo(uint256 amount, address to) external;
-  function deallocateFromUsage(address userAddress, uint256 amount) external;
+interface IVotingEscrow {
+  function create_lock_for(uint _value, uint _lock_duration, address _to) external returns (uint);
 }
 
 contract Presale is Ownable, ReentrancyGuard {
@@ -21,8 +17,8 @@ contract Presale is Ownable, ReentrancyGuard {
   using SafeERC20 for IERC20;
 
   struct UserInfo {
-    uint256 allocation; // amount taken into account to obtain GRAIL (amount spent + discount)
-    uint256 contribution; // amount spent to buy GRAIL
+    uint256 allocation; // amount taken into account to obtain FOX/SHROOM (amount spent + discount)
+    uint256 contribution; // amount spent to buy FOX/SHROOM
 
     uint256 discount; // discount % for this user
     uint256 discountEligibleAmount; // max contribution amount eligible for a discount
@@ -33,10 +29,15 @@ contract Presale is Ownable, ReentrancyGuard {
     bool hasClaimed; // has already claimed its allocation
   }
 
-  IERC20 public immutable GRAIL; // GRAIL token contract
-  IXGrailToken public immutable XGRAIL; // xGRAIL token contract
+  IERC20 public immutable FOX; // FOX token contract
+  IVotingEscrow public immutable VE_FOX; // veFOX token contract
+  IERC20 public immutable FOX_LP_TOKEN; // FOX LP address
+
+  IERC20 public immutable SHROOM; // SHROOM token contract
+  IVotingEscrow public immutable VE_SHROOM; // veSHROOM token contract
+  IERC20 public immutable SHROOM_LP_TOKEN; // SHROOM LP address
+
   IERC20 public immutable SALE_TOKEN; // token used to participate
-  IERC20 public immutable LP_TOKEN; // GRAIL LP address
 
   uint256 public immutable START_TIME; // sale start time
   uint256 public immutable END_TIME; // sale end time
@@ -47,29 +48,42 @@ contract Presale is Ownable, ReentrancyGuard {
   uint256 public totalRaised; // raised amount, does not take into account referral shares
   uint256 public totalAllocation; // takes into account discounts
 
-  uint256 public constant MAX_GRAIL_TO_DISTRIBUTE = 15000 ether; // max GRAIL amount to distribute during the sale
+  uint256 public constant MAX_FOX_TO_DISTRIBUTE = 1_558_822 ether; // max FOX amount to distribute during the sale
+  uint256 public constant MAX_SHROOM_TO_DISTRIBUTE = 3_116_000 ether; // max SHROOM amount to distribute during the sale
 
-  // (=300,000 USDC, with USDC having 6 decimals ) amount to reach to distribute max GRAIL amount
-  uint256 public constant MIN_TOTAL_RAISED_FOR_MAX_GRAIL = 300000000000;
-
-  uint256 public constant XGRAIL_SHARE = 35; // ~1/3 of GRAIL bought is returned as xGRAIL
+  uint256 public constant VE_TOKEN_SHARE = 50; // ~1/2 of FOX/SHROOM bought is returned as veFOX/veSHROOM
 
   address public immutable treasury; // treasury multisig, will receive raised amount
 
-  bool public unsoldTokensBurnt;
-
-
-  constructor(IERC20 grailToken, IXGrailToken xGrailToken, IERC20 saleToken, IERC20 lpToken, uint256 startTime, uint256 endTime, address treasury_) {
+  constructor(
+    IERC20 foxToken, 
+    IVotingEscrow veFoxToken, 
+    IERC20 shroomToken, 
+    IVotingEscrow veShroomToken, 
+    IERC20 saleToken, 
+    IERC20 foxLpToken, 
+    IERC20 shroomLpToken, 
+    uint256 startTime, 
+    uint256 endTime, 
+    address treasury_
+  ) {
     require(startTime < endTime, "invalid dates");
     require(treasury_ != address(0), "invalid treasury");
 
-    GRAIL = grailToken;
-    XGRAIL = xGrailToken;
+    FOX = foxToken;
+    VE_FOX = veFoxToken;
+    SHROOM = shroomToken;
+    VE_SHROOM = veShroomToken;
     SALE_TOKEN = saleToken;
-    LP_TOKEN = lpToken;
+    FOX_LP_TOKEN = foxLpToken;
+    SHROOM_LP_TOKEN = shroomLpToken;
     START_TIME = startTime;
     END_TIME = endTime;
     treasury = treasury_;
+
+    // set max approval for veFOX/veSHROOM locking
+    FOX.approve(address(VE_FOX), type(uint256).max);
+    SHROOM.approve(address(VE_SHROOM), type(uint256).max);
   }
 
   /********************************************/
@@ -78,7 +92,7 @@ contract Presale is Ownable, ReentrancyGuard {
 
   event Buy(address indexed user, uint256 amount);
   event ClaimRefEarnings(address indexed user, uint256 amount);
-  event Claim(address indexed user, uint256 grailAmount, uint256 xGrailAmount);
+  event Claim(address indexed user, uint256 fox, uint256 veFox, uint256 shroom, uint256 veShroom);
   event NewRefEarning(address referrer, uint256 amount);
   event DiscountUpdated();
 
@@ -91,21 +105,28 @@ contract Presale is Ownable, ReentrancyGuard {
   /**
    * @dev Check whether the sale is currently active
    *
-   * Will be marked as inactive if GRAIL has not been deposited into the contract
+   * Will be marked as inactive if FOX/SHROOM has not been deposited into the contract
    */
   modifier isSaleActive() {
-    require(hasStarted() && !hasEnded() && GRAIL.balanceOf(address(this)) >= MAX_GRAIL_TO_DISTRIBUTE, "isActive: sale is not active");
+    require(
+      hasStarted() && 
+      !hasEnded() && 
+      FOX.balanceOf(address(this)) >= MAX_FOX_TO_DISTRIBUTE &&
+      SHROOM.balanceOf(address(this)) >= MAX_SHROOM_TO_DISTRIBUTE, 
+      "isActive: sale is not active"
+    );
     _;
   }
 
   /**
-   * @dev Check whether users can claim their purchased GRAIL
+   * @dev Check whether users can claim their purchased FOX/SHROOM
    *
-   * Sale must have ended, and LP tokens must have been formed
+   * Sale must have ended, and LP tokens must have been formed with liquidity
    */
   modifier isClaimable(){
     require(hasEnded(), "isClaimable: sale has not ended");
-    require(LP_TOKEN.totalSupply() > 0, "isClaimable: no LP tokens");
+    require(FOX_LP_TOKEN.totalSupply() > 0, "isClaimable: no FOX LP tokens");
+    require(SHROOM_LP_TOKEN.totalSupply() > 0, "isClaimable: no SHROOM LP tokens");
     _;
   }
 
@@ -136,26 +157,26 @@ contract Presale is Ownable, ReentrancyGuard {
   }
 
   /**
-  * @dev Returns the amount of GRAIL to be distributed based on the current total raised
-  */
-  function grailToDistribute() public view returns (uint256){
-    if (MIN_TOTAL_RAISED_FOR_MAX_GRAIL > totalRaised) {
-      return MAX_GRAIL_TO_DISTRIBUTE.mul(totalRaised).div(MIN_TOTAL_RAISED_FOR_MAX_GRAIL);
-    }
-    return MAX_GRAIL_TO_DISTRIBUTE;
-  }
-
-  /**
   * @dev Get user share times 1e5
     */
-  function getExpectedClaimAmounts(address account) public view returns (uint256 grailAmount, uint256 xGrailAmount) {
-    if(totalAllocation == 0) return (0, 0);
+  function getExpectedClaimAmounts(address account) 
+    public 
+    view 
+    returns (uint256 foxAmt, uint256 veFoxAmt, uint256 shroomAmt, uint256 veShroomAmt) 
+  {
+    if(totalAllocation == 0) return (0, 0, 0, 0);
 
     UserInfo memory user = userInfo[account];
-    uint256 totalGrailAmount = user.allocation.mul(grailToDistribute()).div(totalAllocation);
 
-    xGrailAmount = totalGrailAmount.mul(XGRAIL_SHARE).div(100);
-    grailAmount = totalGrailAmount.sub(xGrailAmount);
+    // calc FOX/veFOX
+    uint256 totalFoxAmount = user.allocation.mul(MAX_FOX_TO_DISTRIBUTE).div(totalAllocation);
+    veFoxAmt = totalFoxAmount.mul(VE_TOKEN_SHARE).div(100);
+    foxAmt = totalFoxAmount.sub(veFoxAmt);
+
+    // calc SHROOM/veSHROOM
+    uint256 totalShroomAmount = user.allocation.mul(MAX_SHROOM_TO_DISTRIBUTE).div(totalAllocation);
+    veShroomAmt = totalShroomAmount.mul(VE_TOKEN_SHARE).div(100);
+    shroomAmt = totalShroomAmount.sub(veShroomAmt);
   }
 
   /****************************************************************/
@@ -232,7 +253,7 @@ contract Presale is Ownable, ReentrancyGuard {
   }
 
   /**
-   * @dev Claim purchased GRAIL during the sale
+   * @dev Claim purchased FOX/SHROOM during the sale
    */
   function claim() external isClaimable {
     UserInfo storage user = userInfo[msg.sender];
@@ -241,19 +262,26 @@ contract Presale is Ownable, ReentrancyGuard {
     require(!user.hasClaimed, "claim: already claimed");
     user.hasClaimed = true;
 
-    (uint256 grailAmount, uint256 xGrailAmount) = getExpectedClaimAmounts(msg.sender);
+    (
+      uint256 foxAmount, 
+      uint256 veFoxAmount,
+      uint256 shroomAmount, 
+      uint256 veShroomAmount
+    ) = getExpectedClaimAmounts(msg.sender);
 
-    emit Claim(msg.sender, grailAmount, xGrailAmount);
+    emit Claim(msg.sender, foxAmount, veFoxAmount, shroomAmount, veShroomAmount);
 
-    // approve GRAIL conversion to xGRAIL
-    if (GRAIL.allowance(address(this), address(XGRAIL)) < xGrailAmount) {
-      GRAIL.safeApprove(address(XGRAIL), 0);
-      GRAIL.safeApprove(address(XGRAIL), type(uint256).max);
+    // send FOX and lock veFOX
+    if(veFoxAmount > 0) {
+      VE_FOX.create_lock_for(veFoxAmount, 365 days, msg.sender);
     }
+    _safeClaimTransfer(address(FOX), msg.sender, foxAmount);
 
-    // send GRAIL and xGRAIL allocations
-    if(xGrailAmount > 0) XGRAIL.convertTo(xGrailAmount, msg.sender);
-    _safeClaimTransfer(msg.sender, grailAmount);
+    // send SHROOM and lock veSHROOM
+    if(veShroomAmount > 0) {
+      VE_SHROOM.create_lock_for(veShroomAmount, 365 days, msg.sender);
+    }
+    _safeClaimTransfer(address(SHROOM), msg.sender, shroomAmount);
   }
 
   /****************************************************************/
@@ -264,23 +292,6 @@ contract Presale is Ownable, ReentrancyGuard {
     address account;
     uint256 discount;
     uint256 eligibleAmount;
-  }
-
-  /**
-   * @dev Assign custom discounts, used for v1 users
-   *
-   * Based on saved v1 tokens amounts in our snapshot
-   */
-  function setUsersDiscount(DiscountSettings[] calldata users) public onlyOwner {
-    for (uint256 i = 0; i < users.length; ++i) {
-      DiscountSettings memory userDiscount = users[i];
-      UserInfo storage user = userInfo[userDiscount.account];
-      require(userDiscount.discount <= 35, "discount too high");
-      user.discount = userDiscount.discount;
-      user.discountEligibleAmount = userDiscount.eligibleAmount;
-    }
-
-    emit DiscountUpdated();
   }
 
   /********************************************************/
@@ -296,22 +307,6 @@ contract Presale is Ownable, ReentrancyGuard {
     emit EmergencyWithdraw(token, amount);
   }
 
-  /**
-   * @dev Burn unsold GRAIL tokens if MIN_TOTAL_RAISED_FOR_MAX_GRAIL has not been reached
-   *
-   * Must only be called by the owner
-   */
-  function burnUnsoldTokens() external onlyOwner {
-    require(hasEnded(), "burnUnsoldTokens: presale has not ended");
-    require(!unsoldTokensBurnt, "burnUnsoldTokens: already burnt");
-
-    uint256 totalSold = grailToDistribute();
-    require(totalSold < MAX_GRAIL_TO_DISTRIBUTE, "burnUnsoldTokens: no token to burn");
-
-    unsoldTokensBurnt = true;
-    GRAIL.transfer(0x000000000000000000000000000000000000dEaD, MAX_GRAIL_TO_DISTRIBUTE.sub(totalSold));
-  }
-
   /********************************************************/
   /****************** INTERNAL FUNCTIONS ******************/
   /********************************************************/
@@ -319,17 +314,17 @@ contract Presale is Ownable, ReentrancyGuard {
   /**
    * @dev Safe token transfer function, in case rounding error causes contract to not have enough tokens
    */
-  function _safeClaimTransfer(address to, uint256 amount) internal {
-    uint256 grailBalance = GRAIL.balanceOf(address(this));
-    bool transferSuccess = false;
-
-    if (amount > grailBalance) {
-      transferSuccess = GRAIL.transfer(to, grailBalance);
-    } else {
-      transferSuccess = GRAIL.transfer(to, amount);
+  function _safeClaimTransfer(address token, address to, uint256 amount) internal {
+    uint256 bal = IERC20(token).balanceOf(address(this));
+    
+    if (amount > bal) {
+      amount = bal;
     }
 
-    require(transferSuccess, "safeClaimTransfer: Transfer failed");
+    require(
+      IERC20(token).transfer(to, amount), 
+      "safeClaimTransfer: Transfer failed"
+    );
   }
 
   /**

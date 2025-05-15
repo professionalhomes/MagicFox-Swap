@@ -15,8 +15,8 @@ contract GaugeFactoryV2 is IGaugeFactory, Ownable {
 
     constructor() {}
 
-    function createGaugeV2(address _rewardToken,address _ve,address _token,address _distribution, address _internal_bribe, address _external_bribe, bool _isPair) external returns (address) {
-        last_gauge = address(new GaugeV2(_rewardToken,_ve,_token,_distribution,_internal_bribe,_external_bribe,_isPair) );
+    function createGaugeV2(address _rewardToken, address _ve, address _token, address _distribution, address _internal_bribe, address _external_bribe, address _fees_collector, bool _isPair) external returns (address) {
+        last_gauge = address(new GaugeV2(_rewardToken,_ve,_token,_distribution,_internal_bribe,_external_bribe,_fees_collector,_isPair) );
         return last_gauge;
     }
 

@@ -69,7 +69,7 @@ describe("VoterV2", function() {
     await BRIBE_F.setVoter(VOTER.address);
 
     const RDContract = await ethers.getContractFactory("RewardsDistributor");
-    REWARD_DIST = await RDContract.deploy(VE.address);
+    REWARD_DIST = await RDContract.deploy(VE.address, TOKEN.address);
     await REWARD_DIST.deployed();
 
     const MINTERContract = await ethers.getContractFactory("Minter");

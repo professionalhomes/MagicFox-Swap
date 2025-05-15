@@ -14,6 +14,7 @@ module.exports = {
   etherscan: {
     apiKey: {
        opera: secret.ftmScanAPI,
+       bsc: secret.bscScanAPI,
      }
   },
     // solidity: "0.6.12",
@@ -67,6 +68,14 @@ module.exports = {
         ]
       },
     networks: {
+        bsc: {
+          url: "https://bsc-dataseed.binance.org/",
+          chainId: 56,
+          gasPrice: 10000000000,
+          gas: 15000000,
+          accounts: [secret.privateKeyMainnet],
+          explorer: 'https://bscscan.com/',
+        },
         ftmmainnet: {
             // url: "https://rpcapi.fantom.network/",
             // url: "https://rpc.ftm.tools/",

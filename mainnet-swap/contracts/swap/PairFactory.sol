@@ -105,6 +105,7 @@ contract PairFactory is IPairFactory {
 
     function setDegenFee(uint256 _degen) external {
         require(msg.sender == feeManager, 'not fee manager');
+        require(_degen != 0, 'fee must be nonzero');
         require(_degen <= MAX_DEGEN_FEE);
         degenFee = _degen;
     }

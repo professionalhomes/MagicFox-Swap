@@ -121,6 +121,17 @@ describe("Gauge", function() {
   });
 
   it("Test 3 ePoch flow", async function() {
+    // Create pairs
+    const pairContract = await ethers.getContractFactory("Pair");
+
+    await PAIR_F.createPair(testTokens[0].address, testTokens[1].address, true); // Stable pair
+    await PAIR_F.createPair(testTokens[0].address, testTokens[1].address, false); // Unstable pair
+
+    const stableAddress = await PAIR_F.getPair(testTokens[0].address, testTokens[1].address, true);
+    const stablePair = await pairContract.attach(stableAddress);
+
+    const volatileAddress = await PAIR_F.getPair(testTokens[0].address, testTokens[1].address, false);
+    const volatilePair = await pairContract.attach(volatileAddress);
 
     // Create gauges
     const NFT1 = await VE.tokenOfOwnerByIndex(investor1.address, 0);
@@ -128,46 +139,72 @@ describe("Gauge", function() {
 
     await VOTER.createGauge(testTokens[0].address);
     await VOTER.createGauge(testTokens[1].address);
+    await VOTER.createGauge(stablePair.address);
+    await VOTER.createGauge(volatilePair.address);
 
     const gauge0_address = await VOTER.gauges(testTokens[0].address);
     const gauge1_address = await VOTER.gauges(testTokens[1].address);
+    const gauge2_address = await VOTER.gauges(stablePair.address);
+    const gauge3_address = await VOTER.gauges(volatilePair.address);
 
     const gaugeContract = await ethers.getContractFactory("GaugeV2");
     const gauge0 = await gaugeContract.attach(gauge0_address);
     const gauge1 = await gaugeContract.attach(gauge1_address);
+    const gauge2 = await gaugeContract.attach(gauge2_address);
+    const gauge3 = await gaugeContract.attach(gauge3_address);
 
     const gauge0_bribes = await VOTER.external_bribes(gauge0_address);
     const gauge1_bribes = await VOTER.external_bribes(gauge1_address);
+    const gauge2_bribes = await VOTER.external_bribes(gauge2_address);
+    const gauge3_bribes = await VOTER.external_bribes(gauge3_address);
 
     const bribes0_contract = await hre.ethers.getContractAt('Bribe', gauge0_bribes, owner);
     await bribes0_contract.addRewardToken(BRIBE_TOKEN.address);
 
-    await VOTER.connect(investor1).vote(NFT1, [testTokens[0].address, testTokens[1].address], [1000, 100]);
-    await VOTER.connect(investor2).vote(NFT2, [testTokens[1].address], [1000]);
+    // Add liquidity
+    const amount = ethers.utils.parseUnits("1000", 18);
+    const dl = 2147483647; // 2**31-1
+    const args = [true, false];
+    for (let i = 0; i < args.length; i++) {
+      await ROUTER.connect(investor1).addLiquidity(
+        testTokens[0].address, testTokens[1].address, args[i], amount, amount, "0", "0", investor1.address, dl
+      );
+    }
+
+    await VOTER.connect(investor1).vote(
+        NFT1,
+        [testTokens[0].address, testTokens[1].address, stablePair.address, volatilePair.address],
+        [100, 100, 100, 100]);
+    await VOTER.connect(investor2).vote(NFT2, [testTokens[1].address, stablePair.address], [1000, 1000]);
 
     // deposit into gauges
     await testTokens[0].connect(investor1).approve(gauge0.address, ethers.constants.MaxUint256);
     await testTokens[0].connect(investor2).approve(gauge0.address, ethers.constants.MaxUint256);
     await testTokens[1].connect(investor1).approve(gauge1.address, ethers.constants.MaxUint256);
-    // gauge 0
-    await gauge0.connect(investor1).depositAll(0); // leave it like this, to check if boosting works
+    await stablePair.connect(investor1).approve(gauge2.address, ethers.constants.MaxUint256);
+    await volatilePair.connect(investor1).approve(gauge3.address, ethers.constants.MaxUint256);
+
+    // gauges
+    await gauge0.connect(investor1).deposit(amount, NFT1); // leave it like this, to check if boosting works
     await gauge0.connect(investor2).depositAll(NFT2);
-    // gauge 1
-    await gauge1.connect(investor1).depositAll(NFT1);
+    await gauge1.connect(investor1).deposit(amount, NFT1);
+    await gauge2.connect(investor1).depositAll(NFT1);
 
-    // increase from Sunday to Thursday (4 days)
+    /*
+     * Epoch 1 start
+     */
     await time.increase(60 * 60 * 24 * 4);
-    // Distribute ePoch #0 -- END
-
-    // Distribute ePoch #1 -- START
     await VOTER.distributeAll();
-    console.log(`gauge0 balance: ${await TOKEN.balanceOf(gauge0_address)}`);
-    console.log(`gauge1 balance: ${await TOKEN.balanceOf(gauge1_address)}`);
-    console.log(`---------------------------------------------`);
-
-    // set votes
     await VOTER.connect(investor1).poke(NFT1);
     await VOTER.connect(investor2).poke(NFT2);
+
+    // Do some trades
+    for (let i = 0; i < args.length; i++) {
+      await ROUTER.connect(investor1).swapExactTokensForTokens(
+        amount.div(10), 0, [{"from": testTokens[0].address, "to": testTokens[1].address, "stable": args[i]}],
+        investor1.address, dl
+      );
+    }
 
     // deposit bribes
     await BRIBE_TOKEN.approve(bribes0_contract.address, ethers.utils.parseUnits('500', 18));
@@ -176,8 +213,37 @@ describe("Gauge", function() {
     expect(await BRIBE_TOKEN.balanceOf(investor2.address)).to.equal(0);
     expect(await BRIBE_TOKEN.balanceOf(bribes0_contract.address)).to.equal(ethers.utils.parseUnits('500', 18));
 
-    // increase from Thursday to next Thursday (7 days)
+    await VOTER.distributeAll();
+
+    /*
+     * Epoch 2 start
+     */
     await time.increase(60 * 60 * 24 * 7);
+    await VOTER.connect(investor1).poke(NFT1);
+    await VOTER.connect(investor2).poke(NFT2);
+
+    // Claim LP fees manually
+    let start0 = await testTokens[0].balanceOf(investor1.address);
+    await stablePair.connect(investor1).claimFees();
+    let end0 = await testTokens[0].balanceOf(investor1.address);
+    expect(end0 - start0).to.equal(0); // No fees because stable pair LP is deposited
+
+    start0 = await testTokens[0].balanceOf(investor1.address);
+    await volatilePair.connect(investor1).claimFees();
+    end0 = await testTokens[0].balanceOf(investor1.address);
+    expect(end0 - start0).to.be.above(0); // Fees because volatile pair LP is not deposited
+
+    // Claim LP fees via gauge
+    const internal_bribe = await gauge2.internal_bribe();
+    start0 = await testTokens[0].balanceOf(internal_bribe);
+    await gauge3.connect(investor1).claimFees();
+    end0 = await testTokens[0].balanceOf(internal_bribe);
+    expect(end0 - start0).to.equal(0); // No fees because volatile pair LP is not deposited
+
+    start0 = await testTokens[0].balanceOf(internal_bribe);
+    await gauge2.connect(investor1).claimFees();
+    end0 = await testTokens[0].balanceOf(internal_bribe);
+    expect(end0 - start0).to.be.above(0); // Fees because stable pair LP is deposited
 
     // claim emissions GAUGE 0 (FOX)
     const investor1BalanceBefore = await TOKEN.balanceOf(investor1.address);
@@ -196,127 +262,35 @@ describe("Gauge", function() {
 
     // claim emissions GAUGE 1 (FOX)
     await gauge1.connect(investor1).getReward();
-    
     expect(await gauge0.earned(investor1.address)).to.equal(0);
     expect(await gauge0.earned(investor2.address)).to.equal(0);
     expect(await gauge1.earned(investor1.address)).to.equal(0);
-    // Distribute ePoch #1 -- END
-
-    // Distribute ePoch #2 -- START
-    console.log(`gauge0 balance: ${await TOKEN.balanceOf(gauge0_address)} (LEFTOVER)`);
-    console.log(`gauge1 balance: ${await TOKEN.balanceOf(gauge1_address)} (LEFTOVER)`);
 
     await VOTER.distributeAll();
 
-    console.log(`------------- distributeAll ----------------`);
-    console.log(`gauge0 balance: ${await TOKEN.balanceOf(gauge0_address)}`);
-    console.log(`gauge1 balance: ${await TOKEN.balanceOf(gauge1_address)}`);
-
-    // increase from Thursday to next Thursday (7 days)
+    /*
+     * Epoch 3 start
+     */
     await time.increase(60 * 60 * 24 * 7);
+    await VOTER.connect(investor1).poke(NFT1);
+    await VOTER.connect(investor2).poke(NFT2);
 
     await gauge0.connect(investor1).getReward();
     await gauge0.connect(investor2).getReward();
     await gauge1.connect(investor1).getReward();
 
-    console.log(`------------- gauge balance after getReward ----------------`);
+    // Claim internal bribes
+    start0 = await testTokens[0].balanceOf(investor1.address);
+    await VOTER.connect(investor1).claimFees([internal_bribe], [[testTokens[0].address]], NFT1);
+    end0 = await testTokens[0].balanceOf(investor1.address);
+    expect(end0 - start0).to.be.above(0);  // LP fees claimed to gauge2 in previous epoch, amounts differ!
 
-    console.log(`gauge0 balance: ${await TOKEN.balanceOf(gauge0_address)} (LEFTOVER)`);
-    console.log(`gauge1 balance: ${await TOKEN.balanceOf(gauge1_address)} (LEFTOVER)`);
-
-    // claimBribes
+    // Claim external bribes
     await VOTER.connect(investor1).claimBribes([gauge0_bribes], [[BRIBE_TOKEN.address]], NFT1);
     await VOTER.connect(investor2).claimBribes([gauge0_bribes], [[BRIBE_TOKEN.address]], NFT2);
     expect(await BRIBE_TOKEN.balanceOf(bribes0_contract.address)).to.be.lt(10); // some fraction leftovers are expected
   });
 
-  // it("Voters can claim fees for LPs", async function() {
-  //   // Set day of the week
-  //   let dayOfWeek = new Date(await time.latest() * 1000).getDay();
-  //   await time.increase(60 * 60 * 24 * (12 - dayOfWeek));
-
-  //   const NFT1 = await VE.tokenOfOwnerByIndex(investor1.address, 0);
-  //   const NFT2 = await VE.tokenOfOwnerByIndex(investor2.address, 0);
-
-  //   // Create pairs
-  //   const pairContract = await ethers.getContractFactory("Pair");
-
-  //   await PAIR_F.createPair(testTokens[0].address, testTokens[1].address, true); // Stable pair
-  //   await PAIR_F.createPair(testTokens[0].address, testTokens[1].address, false); // Unstable pair
-
-  //   const stableAddress = await PAIR_F.getPair(testTokens[0].address, testTokens[1].address, true);
-  //   const stablePair = await pairContract.attach(stableAddress);
-
-  //   const volatileAddress = await PAIR_F.getPair(testTokens[0].address, testTokens[1].address, false);
-  //   const volatilePair = await pairContract.attach(volatileAddress);
-
-  //   // Create gauges
-  //   await VOTER.createGauge(stablePair.address);
-  //   await VOTER.createGauge(volatilePair.address);
-
-  //   const gauge0_address = await VOTER.gauges(stablePair.address);
-  //   const gauge1_address = await VOTER.gauges(volatilePair.address);
-
-  //   const gaugeContract = await ethers.getContractFactory("GaugeV2");
-  //   const gauge0 = await gaugeContract.attach(gauge0_address);
-  //   const gauge1 = await gaugeContract.attach(gauge1_address);
-
-  //   await stablePair.connect(investor1).approve(gauge0.address, ethers.constants.MaxUint256);
-  //   await volatilePair.connect(investor1).approve(gauge1.address, ethers.constants.MaxUint256);
-
-  //   // Add liquidity
-  //   const amount = ethers.utils.parseUnits("10000", 18);
-  //   const dl = 2147483647; // 2**31-1
-  //   const args = [true, false];
-
-  //   for (let i = 0; i < args.length; i++) {
-  //     await ROUTER.connect(investor1).addLiquidity(
-  //       testTokens[0].address, testTokens[1].address, args[i], amount, amount, "0", "0", investor1.address, dl
-  //     );
-  //   }
-    
-  //   // Deposit only one LP
-  //   expect(await stablePair.balanceOf(investor1.address)).to.be.above(0);
-  //   expect(await volatilePair.balanceOf(investor1.address)).to.be.above(0);
-  //   await gauge0.connect(investor1).depositAll(NFT1);
-  //   await gauge1.connect(investor1).depositAll(NFT1);
-
-  //   // Do some trades
-  //   for (let i = 0; i < args.length; i++) {
-  //     await ROUTER.connect(investor1).swapExactTokensForTokens(
-  //       amount.div(10), 0, [{"from": testTokens[0].address, "to": testTokens[1].address, "stable": args[i]}],
-  //       investor1.address, dl
-  //     );
-  //   }
-
-  //   // Start balance
-  //   // ...
-
-  //   // Vote & wait
-  //   // Investor1: deposit both, vote for stable
-  //   // Investor2: deposit none, vote for both
-  //   await VOTER.connect(investor1).vote(NFT1, [stablePair.address], [100]);
-  //   await VOTER.connect(investor2).vote(NFT2, [stablePair.address, volatilePair.address], [100, 100]);
-
-  //   await time.increase(60 * 60 * 24 * 7);
-
-  //   console.log(`VOTER balance: ${await TOKEN.balanceOf(VOTER.address)}`);
-  //   console.log(`gauge0 balance: ${await TOKEN.balanceOf(gauge0_address)}`);
-  //   console.log(`gauge1 balance: ${await TOKEN.balanceOf(gauge1_address)}`);
-  //   console.log(`---------------------------------------------`);
-
-  //   await VOTER.distributeAll();
-
-  //   console.log(`VOTER balance: ${await TOKEN.balanceOf(VOTER.address)}`);
-  //   console.log(`gauge0 balance: ${await TOKEN.balanceOf(gauge0_address)}`);
-  //   console.log(`gauge1 balance: ${await TOKEN.balanceOf(gauge1_address)}`);
-
-  //   // Voters can claim fees only for added LPs they voted on
-  //   await VOTER.connect(investor1).claimRewards([gauge0.address], [[stablePair.address]]);  // <-- TODO
-
-  //   // End balance
-  //   // ...
-  // });
 
   it("NFT can not be transferred after voting without resetting", async function() {
     await VOTER.createGauge(testTokens[0].address);
@@ -337,5 +311,64 @@ describe("Gauge", function() {
     // The owner can transer after resetting
     await expect(VE.connect(investor2).transferFrom(investor1.address, investor2.address, NFT)).to.be.reverted;
     await VE.connect(investor1).transferFrom(investor1.address, investor2.address, NFT);
+  });
+
+  it("Can claim bribes after one epoch", async function() {
+    // Setup
+    const token = testTokens[testTokens.length-1];
+    const NFT = await VE.tokenOfOwnerByIndex(investor1.address, 0);
+    const bribe_amount = ethers.utils.parseUnits("100", 18);
+
+    await VOTER.createGauge(token.address);
+    const gaugeContract = await ethers.getContractFactory("GaugeV2");
+    const gauge = await gaugeContract.attach(await VOTER.gauges(token.address));
+    const gauge_bribes = await VOTER.external_bribes(gauge.address);
+
+    const bribes_contract = await hre.ethers.getContractAt('Bribe', gauge_bribes, owner);
+    await bribes_contract.addRewardToken(BRIBE_TOKEN.address);
+    await BRIBE_TOKEN.approve(bribes_contract.address, bribe_amount.mul(10));
+    await token.connect(investor1).approve(gauge.address, ethers.constants.MaxUint256);
+
+    await gauge.connect(investor1).depositAll(NFT);
+    await VOTER.connect(investor1).vote(NFT, [token.address], [1000]);
+
+    let new_bribes = await BRIBE_TOKEN.balanceOf(investor1.address);
+    let old_bribes, notified_amount;
+
+    for (let epoch = 0; epoch < 10; epoch++) {
+      await VOTER.distributeAll();
+      await VOTER.connect(investor1).poke(NFT);
+      await bribes_contract.notifyRewardAmount(BRIBE_TOKEN.address, bribe_amount);
+      await VOTER.connect(investor1).claimBribes([gauge_bribes], [[BRIBE_TOKEN.address]], NFT);
+
+      old_bribes = new_bribes;
+      new_bribes = await BRIBE_TOKEN.balanceOf(investor1.address);
+      notified_amount = bribe_amount.mul(epoch + 1);
+
+      /*
+      console.log("----------[ Epoch " + epoch + " ]----------");
+      console.log("Total notified: " + ethers.utils.formatEther(notified_amount));
+      console.log("Total received: " + ethers.utils.formatEther(new_bribes));
+      console.log("New received:   " + ethers.utils.formatEther(new_bribes.sub(old_bribes)));
+      */
+
+      // Tests
+      if (epoch == 0) { // Epoch 0 receives bribes immediately
+        expect(bribe_amount.sub(new_bribes.sub(old_bribes))).to.be.within(0, 10);
+        expect(notified_amount.sub(new_bribes)).to.equal(1);
+      } else if (epoch == 1) { // Epoch 1 doesn't receive bribes
+        expect(new_bribes.sub(old_bribes)).to.equal(0);
+        expect(notified_amount.sub(new_bribes).sub(bribe_amount)).to.be.within(0, 10);
+      } else { // Epochs 2 - 9 receive bribes for previous week
+        expect(bribe_amount.sub(new_bribes.sub(old_bribes))).to.be.within(0, 10);
+        expect(notified_amount.sub(new_bribes).sub(bribe_amount)).to.be.within(0, 10);
+      }
+
+      if (epoch == 0) {
+          await time.increase(60 * 60 * 24 * 4);
+      } else {
+          await time.increase(60 * 60 * 24 * 7);
+      }
+    }
   });
 });

@@ -12,7 +12,6 @@ import './interfaces/IPair.sol';
 import './interfaces/IPairFactory.sol';
 import './interfaces/IVoter.sol';
 import './interfaces/IVotingEscrow.sol';
-import "../lz/interfaces/ILayerZeroEndpoint.sol";
 import "hardhat/console.sol";
 
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -20,9 +19,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 
 contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
-
-    // ILayerZeroEndpoint public constant lzEndpoint = ILayerZeroEndpoint(0x3c2269811836af69497E5F486A85D7316753cf62); // BSC
-    ILayerZeroEndpoint public constant lzEndpoint = ILayerZeroEndpoint(0xb6319cC6c8c27A8F5dAF0dD3DF91EA35C4720dd7); // FTM
 
     address public _ve; // the ve token that governs these contracts
     address public factory; // the PairFactory
@@ -42,9 +38,6 @@ contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
 
     address[] public pools; // all pools viable for incentives
     mapping(address => address) public gauges; // pool => gauge
-    mapping(address => uint) public gaugeChain; // gauge => uint
-    mapping(uint => address[]) public chainGauges; // chain => gauge list
-    mapping(uint => mapping(address => uint)) public epochBridgeData; // epoch => gauge => claimable
     mapping(address => uint) public gaugesDistributionTimestmap;
     mapping(address => address) public poolForGauge; // gauge => pool
     mapping(address => address) public internal_bribes; // gauge => internal bribe (only fees)
@@ -69,16 +62,16 @@ contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
     event Attach(address indexed owner, address indexed gauge, uint tokenId);
     event Detach(address indexed owner, address indexed gauge, uint tokenId);
 
-    // constructor(address __ve, address _factory, address  _gauges, address _bribes) {
-    //     _ve = __ve;
-    //     factory = _factory;
-    //     base = IVotingEscrow(__ve).token();
-    //     gaugefactory = _gauges;
-    //     bribefactory = _bribes;
-    //     minter = msg.sender;
-    //     governor = msg.sender;
-    //     emergencyCouncil = msg.sender;
-    // }      
+    constructor(address __ve, address _factory, address  _gauges, address _bribes) {
+        _ve = __ve;
+        factory = _factory;
+        base = IVotingEscrow(__ve).token();
+        gaugefactory = _gauges;
+        bribefactory = _bribes;
+        minter = msg.sender;
+        governor = msg.sender;
+        emergencyCouncil = msg.sender;
+    }      
 
     function _initialize(address _minter) external {
         require(msg.sender == minter || msg.sender == emergencyCouncil);
@@ -197,7 +190,7 @@ contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
         _vote(_tokenId, _poolVote, _weights);
     }
 
-    function createGauge(address _pool, uint chainId) external returns (address) {
+    function createGauge(address _pool) external returns (address) {
         require(msg.sender == governor, "Only governor");
         require(gauges[_pool] == address(0x0), "exists");
         address[] memory allowedRewards = new address[](3);
@@ -225,11 +218,6 @@ contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
         address _external_bribe = IBribeFactory(bribefactory).createBribe(owner(), tokenA, tokenB, _type);
 
         address _gauge = IGaugeFactory(gaugefactory).createGaugeV2(base, _ve, _pool, address(this), _internal_bribe, _external_bribe, address(0), isPair);
-        
-        if(chainId > 0 && chainId != block.chainid) {
-            gaugeChain[_gauge] = chainId;
-            chainGauges[chainId].push(_gauge);
-        }
 
         IERC20(base).approve(_gauge, type(uint).max);
         internal_bribes[_gauge] = _internal_bribe;
@@ -369,38 +357,6 @@ contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
         }
     }
 
-    function distributeSidechain(uint16 chainId, uint period) public payable {
-        require(chainId > 0 && chainId != block.chainid, "invalid chainId");
-        address _gauge;
-        uint _totalClaimable;
-        uint[] memory _claimable = new uint256[](chainGauges[chainId].length);
-        for (uint i = 0; i < chainGauges[chainId].length; i++) {
-            _gauge = chainGauges[chainId][i];
-            _claimable[i] = epochBridgeData[period][_gauge];
-            _totalClaimable += epochBridgeData[period][_gauge];
-            epochBridgeData[period][_gauge] = 0;
-        }
-
-        if (_totalClaimable > 0) {
-            // Bridge rewards & array with claimable amounts per gauge using LZ
-            bytes memory lzPayload = abi.encode(0, chainGauges[chainId], _claimable);
-            // lzEndpoint.send{value: msg.value}(chainId, chainGaugeManager[chainId], lzPayload, address(0), address(0), "0x");
-
-            // We also need to send tokens to ProxyOFT contract on main chain
-            // We also need to send tokens to ProxyOFT contract on main chain
-            // We also need to send tokens to ProxyOFT contract on main chain
-        }
-    }
-
-    function testBridge(uint16 chainId, address sideChainManager) public payable {
-        // address[] memory _gauges = [address(0), 0x000000000000000000000000000000000000dEaD];
-        // uint[] memory _claimable = [11111,99999];
-        bytes memory lzPayload = abi.encode(0, [address(0), 0x000000000000000000000000000000000000dEaD], [11111,99999]);
-        bytes memory trustedPath = abi.encodePacked(sideChainManager, address(this));
-        
-        lzEndpoint.send{value: msg.value}(chainId, trustedPath, lzPayload, payable(msg.sender), address(0), bytes(""));
-    }
-
     function distribute(address _gauge) public nonReentrant {
         IMinter(minter).update_period();
         _updateFor(_gauge); // should set claimable to 0 if killed
@@ -411,14 +367,9 @@ contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
         // distribute only if claimable is > 0 and currentEpoch != lastepoch
         if (_claimable > 0 && lastTimestamp < currentTimestamp) {
             claimable[_gauge] = 0;
-            if (gaugeChain[_gauge] == 0) {
-                IGauge(_gauge).notifyRewardAmount(base, _claimable);
-                emit DistributeReward(msg.sender, _gauge, _claimable);
-            } else {
-                // save for later bridging in bulk
-                epochBridgeData[currentTimestamp][_gauge] = _claimable; 
-            }
+            IGauge(_gauge).notifyRewardAmount(base, _claimable);
             gaugesDistributionTimestmap[_gauge] = currentTimestamp;
+            emit DistributeReward(msg.sender, _gauge, _claimable);
         }
     }
 

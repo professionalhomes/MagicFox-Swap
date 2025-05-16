@@ -1,12 +1,13 @@
 const hre = require("hardhat");
 
 async function main() {
-    const ContractF = await hre.ethers.getContractFactory("DumboToken");
-    const contr = await ContractF.deploy();
+    [deployer] = await hre.ethers.getSigners()
+    const ContractF = await hre.ethers.getContractFactory("DummyToken");
+    const contr = await ContractF.deploy(deployer.address);
 
     await contr.deployed();
 
-    console.log("DumboToken deployed to: %saddress/%s", hre.network.config.explorer, contr.address);
+    console.log("DummyToken deployed to: %saddress/%s", hre.network.config.explorer, contr.address);
 }
 
 main()

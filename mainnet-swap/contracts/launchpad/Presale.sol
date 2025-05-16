@@ -32,11 +32,11 @@ contract Presale is Ownable, ReentrancyGuard {
 
   IERC20 public immutable FOX; // FOX token contract
   IVotingEscrow public immutable VE_FOX; // veFOX token contract
-  IERC20 public immutable FOX_LP_TOKEN; // FOX LP address
+  address public FOX_LP_TOKEN; // FOX LP address
 
   IERC20 public immutable SHROOM; // SHROOM token contract
   IVotingEscrow public immutable VE_SHROOM; // veSHROOM token contract
-  IERC20 public immutable SHROOM_LP_TOKEN; // SHROOM LP address
+  address public SHROOM_LP_TOKEN; // SHROOM LP address
 
   IERC20 public immutable SALE_TOKEN; // token used to participate
 
@@ -63,8 +63,6 @@ contract Presale is Ownable, ReentrancyGuard {
     IERC20 shroomToken, 
     IVotingEscrow veShroomToken, 
     IERC20 saleToken, 
-    IERC20 foxLpToken, 
-    IERC20 shroomLpToken, 
     uint256 startTime, 
     uint256 endTime, 
     address treasury_
@@ -77,8 +75,6 @@ contract Presale is Ownable, ReentrancyGuard {
     SHROOM = shroomToken;
     VE_SHROOM = veShroomToken;
     SALE_TOKEN = saleToken;
-    FOX_LP_TOKEN = foxLpToken;
-    SHROOM_LP_TOKEN = shroomLpToken;
     START_TIME = startTime;
     END_TIME = endTime;
     treasury = treasury_;
@@ -127,8 +123,14 @@ contract Presale is Ownable, ReentrancyGuard {
    */
   modifier isClaimable(){
     require(hasEnded(), "isClaimable: sale has not ended");
-    require(FOX_LP_TOKEN.totalSupply() > 0, "isClaimable: no FOX LP tokens");
-    require(SHROOM_LP_TOKEN.totalSupply() > 0, "isClaimable: no SHROOM LP tokens");
+    require(
+      FOX_LP_TOKEN != address(0) && IERC20(FOX_LP_TOKEN).totalSupply() > 0, 
+      "isClaimable: no FOX LP tokens"
+    );
+    require(
+      SHROOM_LP_TOKEN != address(0) && IERC20(SHROOM_LP_TOKEN).totalSupply() > 0, 
+      "isClaimable: no SHROOM LP tokens"
+    );
     _;
   }
 
@@ -290,6 +292,13 @@ contract Presale is Ownable, ReentrancyGuard {
     address account;
     uint256 discount;
     uint256 eligibleAmount;
+  }
+
+  function setLpTokens(address _foxLpToken, address _shroomLpToken) external onlyOwner {
+    require(_foxLpToken != address(0), "Zero address not allowed.");
+    require(_shroomLpToken != address(0), "Zero address not allowed.");
+    FOX_LP_TOKEN = _foxLpToken;
+    SHROOM_LP_TOKEN = _shroomLpToken;
   }
 
   /********************************************************/

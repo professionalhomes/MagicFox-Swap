@@ -9,6 +9,8 @@ import "./OFTCore.sol";
 
 // override decimal() function is needed
 contract OFT is OFTCore, ERC20, IOFT {
+    address public gaugeManager;
+
     constructor(string memory _name, string memory _symbol, address _lzEndpoint) ERC20(_name, _symbol) OFTCore(_lzEndpoint) {}
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(OFTCore, IERC165) returns (bool) {
@@ -34,8 +36,6 @@ contract OFT is OFTCore, ERC20, IOFT {
         _mint(_toAddress, _amount);
         return _amount;
     }
-
-    address public gaugeManager;
 
     function setGaugeManager(address _gaugeManager) external onlyOwner {
         require(_gaugeManager != address(0), 'Null address not allowed!');

@@ -14,6 +14,7 @@ module.exports = {
   etherscan: {
     apiKey: {
        opera: secret.ftmScanAPI,
+       avalanche: secret.snowtraceAPI,
        bsc: secret.bscScanAPI,
      }
   },
@@ -85,7 +86,15 @@ module.exports = {
             gas: 1000000000,
             accounts: [secret.privateKeyMainnet],
             explorer: 'https://ftmscan.com/',
-        }
+        },
+        avalanche: {
+          url: "https://api.avax.network/ext/bc/C/rpc",
+          chainId: 43114,
+          gasPrice: 30000000000, // 30 gwei
+          gas: 5000000,
+          accounts: [secret.privateKeyMainnet],
+          explorer: 'https://snowtrace.io/',
+      }
     },
     abiExporter: {
         path: './data/abi',

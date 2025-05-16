@@ -141,7 +141,7 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
         if (_totalSupply == 0) {
             return rewardPerTokenStored;
         } else {
-            return rewardPerTokenStored.add(lastTimeRewardApplicable().sub(lastUpdateTime).mul(rewardRate).mul(1e18).div(derivedSupply));
+            return rewardPerTokenStored.add(lastTimeRewardApplicable().sub(lastUpdateTime).mul(rewardRate).mul(1e18).div(_totalSupply));
         }
     }
 

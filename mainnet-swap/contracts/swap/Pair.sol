@@ -4,7 +4,6 @@ pragma solidity 0.8.13;
 import './libraries/Math.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/IPair.sol';
-import './interfaces/IDibs.sol';
 import './interfaces/IPairCallee.sol';
 import './PairFactory.sol';
 import './PairFees.sol';

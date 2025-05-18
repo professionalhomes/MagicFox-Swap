@@ -4,7 +4,15 @@ pragma solidity 0.8.13;
 import {Base64} from "./libraries/Base64.sol";
 import {IVeArtProxy} from "./interfaces/IVeArtProxy.sol";
 
-contract VeArt {
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+
+contract VeArt is IVeArtProxy, OwnableUpgradeable {
+
+    constructor() {}
+
+    function initialize() initializer public {
+        __Ownable_init();
+    }
 
     function toString(uint value) internal pure returns (string memory) {
         // Inspired by OraclizeAPI's implementation - MIT license

@@ -267,11 +267,6 @@ contract GaugeManager is NonblockingLzApp, ReentrancyGuard {
         factory = _factory;
     }
 
-    // function setSidechainManager(uint16 _chainId, address _manager) external {
-    //     require(msg.sender == governor, "Only governor");
-    //     sidechainManager[_chainId] = _manager;
-    // }
-
     function killGaugeTotally(address _gauge) external {
         require(msg.sender == emergencyCouncil, "not emergency council");
         require(isAlive[_gauge], "gauge already dead");

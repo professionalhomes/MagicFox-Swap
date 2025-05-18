@@ -3,8 +3,9 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("VoterV2", function() {
-  let provider, VE, ART, TOKEN, PROXY_OFT, GAUGE_F, BRIBE_F, BRIBE_TOKEN, REWARD_DIST, MINTER, VOTER, PAIR_F, owner, investor1, investor2, lzEndpoint;
+  let provider, VE, ART, TOKEN, GAUGE_F, BRIBE_F, BRIBE_TOKEN, REWARD_DIST, MINTER, VOTER, PAIR_F, DUMMYContract, owner, investor1, investor2;
   const ONE_WEEK = 24 * 3600 * 7;
+  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
   let testTokens = []
 
   before(async () => {
@@ -12,7 +13,8 @@ describe("VoterV2", function() {
   });
 
   beforeEach(async () => {
-    [ owner, investor1, investor2, lzEndpoint ] = await ethers.getSigners();
+
+    [ owner, investor1, investor2  ] = await ethers.getSigners();
 
     provider = ethers.getDefaultProvider();
 
@@ -24,14 +26,6 @@ describe("VoterV2", function() {
     TOKEN = await TOKENContract.deploy();
     await TOKEN.deployed();
     await TOKEN.initialMint(investor1.address);
-
-    const PROXYOFTContract = await ethers.getContractFactory("ProxyOFT");
-    PROXY_OFT = await PROXYOFTContract.deploy(
-      lzEndpoint.address, // _lzEndpoint
-      TOKEN.address, // _token
-    );
-    await PROXY_OFT.deployed();
-
 
     let tmpToken;
     const DUMMYContract = await ethers.getContractFactory("DummyToken");
@@ -53,35 +47,35 @@ describe("VoterV2", function() {
     await BRIBE_TOKEN.deployed();
     
     const ArtContract = await ethers.getContractFactory("VeArt");
-    ART = await upgrades.deployProxy(ArtContract, []);
+    ART = await ArtContract.deploy();
     await ART.deployed();
-
+    
     const VEContract = await ethers.getContractFactory("VotingEscrow");
     VE = await VEContract.deploy(TOKEN.address, ART.address);
     await VE.deployed();
-
+    
     //await TOKEN.connect(investor1).approve(VE.address, ethers.constants.MaxUint256);
 
     const BRIBEContract = await ethers.getContractFactory("BribeFactoryV2");
-    BRIBE_F = await upgrades.deployProxy(BRIBEContract, [owner.address]);
+    BRIBE_F = await BRIBEContract.deploy(owner.address);
     await BRIBE_F.deployed();
-
+    
     const GAUGEContract = await ethers.getContractFactory("GaugeFactoryV2");
-    GAUGE_F = await upgrades.deployProxy(GAUGEContract, []);
+    GAUGE_F = await GAUGEContract.deploy();
     await GAUGE_F.deployed();
 
     const VOTERContract = await ethers.getContractFactory("VoterV2_1");
-    VOTER = await upgrades.deployProxy(VOTERContract, [VE.address, PAIR_F.address, GAUGE_F.address, BRIBE_F.address, PROXY_OFT.address]);
+    VOTER = await VOTERContract.deploy(VE.address, PAIR_F.address, GAUGE_F.address, BRIBE_F.address);
     await VOTER.deployed();
 
     await BRIBE_F.setVoter(VOTER.address);
-
+    
     const RDContract = await ethers.getContractFactory("RewardsDistributor");
     REWARD_DIST = await RDContract.deploy(VE.address, TOKEN.address);
     await REWARD_DIST.deployed();
 
     const MINTERContract = await ethers.getContractFactory("Minter");
-    MINTER = await upgrades.deployProxy(MINTERContract, [VOTER.address, VE.address, REWARD_DIST.address]);
+    MINTER = await MINTERContract.deploy(VOTER.address, VE.address, REWARD_DIST.address);
     await MINTER.deployed();
 
     await VE.setVoter(VOTER.address);
@@ -102,12 +96,12 @@ describe("VoterV2", function() {
   it("Create gauge, bribe, vote,/*  distributeAll", async function() {
     // Create gauge
     console.log(`---- createGauge 0 ----`);
-    await VOTER.createGauge(testTokens[0].address, 0);
-    await expect(VOTER.createGauge(testTokens[0].address, 0)).to.be.revertedWith('exists');
+    await VOTER.createGauge(testTokens[0].address);
+    await expect(VOTER.createGauge(testTokens[0].address)).to.be.revertedWith('exists');
     expect(await VOTER.pools(0)).to.equal(testTokens[0].address);
 
     console.log(`---- createGauge 1 ----`);
-    await VOTER.createGauge(testTokens[1].address, 0);
+    await VOTER.createGauge(testTokens[1].address);
     expect(await VOTER.pools(1)).to.equal(testTokens[1].address);
 
     const gauge0_address = await VOTER.gauges(testTokens[0].address);
@@ -184,13 +178,30 @@ describe("VoterV2", function() {
 
     // Create gauge
     console.log(`\n---- createGauge 0 ----`);
-    await VOTER.createGauge(testTokens[0].address, 0);
+    await VOTER.createGauge(testTokens[0].address);
     const tokenId0 = await VE.tokenOfOwnerByIndex(investor1.address, 0);
 
     const gauge0_address = await VOTER.gauges(testTokens[0].address);
     const gauge1_address = await VOTER.gauges(testTokens[1].address);
 
     const GAUGE_0 = await ethers.getContractAt("GaugeV2", gauge0_address);
+    const STRATEGYContract = await ethers.getContractFactory("Strategy_Native");
+    STRATEGY = await STRATEGYContract.deploy(
+      [GAUGE_0.address,ZERO_ADDRESS,ZERO_ADDRESS,ZERO_ADDRESS,ZERO_ADDRESS],
+      [ZERO_ADDRESS,ZERO_ADDRESS, testTokens[0].address,ZERO_ADDRESS,ZERO_ADDRESS,ZERO_ADDRESS,ZERO_ADDRESS],
+      true,
+      0,
+      [],
+      [],
+      [],
+      [],
+      [],
+      [],
+      10000
+    );
+    await STRATEGY.deployed();
+    await GAUGE_0.initStrategy(STRATEGY.address);
+
     console.log(`GAUGE_0 totalSupply: ${await GAUGE_0.totalSupply()}`);
     console.log(`testToken0 investor1 balance: ${(await testTokens[0].balanceOf(investor1.address))}`);
 
@@ -199,33 +210,46 @@ describe("VoterV2", function() {
     await testTokens[0].connect(investor2).approve(GAUGE_0.address, ethers.constants.MaxUint256);
     await GAUGE_0.connect(investor1).deposit(ethers.utils.parseUnits('2', 18), "0x0");
     await GAUGE_0.connect(investor2).deposit(ethers.utils.parseUnits('2', 18), "0x0");
-
     console.log(`GAUGE_0 totalSupply:          ${await GAUGE_0.totalSupply()}`);
     console.log(`GAUGE_0 derivedSupply:        ${await GAUGE_0.derivedSupply()}`);
+    console.log(`GAUGE_0 balance:              ${await GAUGE_0.derivedSupply()}`);
+    expect(await GAUGE_0.balance()).to.equal(ethers.utils.parseUnits('4', 18));
+    expect(await GAUGE_0.derivedSupply()).to.equal(ethers.utils.parseUnits('1.6', 18));
 
     console.log(`\n---- deposit 2 ----`);
     await GAUGE_0.connect(investor1).deposit(ethers.utils.parseUnits('2', 18), tokenId0);
-
+    console.log(`token balanceOfNFT:           ${await VE.balanceOfNFT(tokenId0)}`);
     console.log(`GAUGE_0 totalSupply:          ${await GAUGE_0.totalSupply()}`);
     console.log(`GAUGE_0 derivedSupply:        ${await GAUGE_0.derivedSupply()}`);
-
     console.log(`GAUGE_0 investor1 balance:    ${(await GAUGE_0.balanceOf(investor1.address))}`);
-    console.log(`GAUGE_0 investor1 dBalance:   ${(await GAUGE_0.derivedBalance(investor1.address))}`);
+    console.log(`GAUGE_0 investor1 dBalance:   ${(await GAUGE_0.derivedBalanceOf(investor1.address))}`);
     console.log(`GAUGE_0 investor2 balance:    ${(await GAUGE_0.balanceOf(investor2.address))}`);
-    console.log(`GAUGE_0 investor2 dBalance:   ${(await GAUGE_0.derivedBalance(investor2.address))}`);
+    console.log(`GAUGE_0 investor2 dBalance:   ${(await GAUGE_0.derivedBalanceOf(investor2.address))}`);
+    expect(await GAUGE_0.balance()).to.equal(ethers.utils.parseUnits('6', 18));
 
     console.log(`\n---- increase boost ----`);
     await VE.connect(investor1).deposit_for(tokenId0, ethers.utils.parseUnits('2', 18));
     await GAUGE_0.connect(investor1).updateDerivedBalance();
     VE.totalSupply()
     console.log(`VE totalSUpply:               ${(await VE.totalSupply())}`);
-    console.log(`GAUGE_0 investor1 dBalance:   ${(await GAUGE_0.derivedBalance(investor1.address))}`);
+    console.log(`GAUGE_0 investor1 dBalance:   ${(await GAUGE_0.derivedBalanceOf(investor1.address))}`);
 
-    console.log(`\n---- transfer VE ----`);
+    console.log(`\n---- fail transfer VE ----`);
     await expect(VE.connect(investor1).transferFrom(investor1.address, investor2.address, tokenId0)).to.be.revertedWith('attached');
     await GAUGE_0.connect(investor1).withdrawToken(0, tokenId0);
     console.log(`GAUGE_0 investor1 balance:    ${(await GAUGE_0.balanceOf(investor1.address))}`);
-    console.log(`GAUGE_0 investor1 dBalance:   ${(await GAUGE_0.derivedBalance(investor1.address))}`);
+    console.log(`GAUGE_0 investor1 dBalance:   ${(await GAUGE_0.derivedBalanceOf(investor1.address))}`);
+    console.log(`GAUGE_0 totalSupply:          ${await GAUGE_0.totalSupply()}`);
+    console.log(`GAUGE_0 derivedSupply:        ${await GAUGE_0.derivedSupply()}`);
+
+    console.log(`\n---- ----`);
+    await GAUGE_0.connect(investor1).withdrawToken(ethers.utils.parseUnits('1', 18), "0x0");
+    console.log(`GAUGE_0 investor1 balance:    ${(await GAUGE_0.balanceOf(investor1.address))}`);
+    console.log(`GAUGE_0 investor1 dBalance:   ${(await GAUGE_0.derivedBalanceOf(investor1.address))}`);
+    console.log(`GAUGE_0 totalSupply:          ${await GAUGE_0.totalSupply()}`);
+    console.log(`GAUGE_0 derivedSupply:        ${await GAUGE_0.derivedSupply()}`);
+
+    console.log(`\n---- transfer VE ----`);
     await VE.connect(investor1).transferFrom(investor1.address, investor2.address, tokenId0);
     
     console.log(`VE owner:                     ${await VE.ownerOf(tokenId0)}`);

@@ -2,17 +2,19 @@
 pragma solidity ^0.8.11;
 
 import "./Bribes.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 interface IBribe {
     function addReward(address) external;
 }
 
-contract BribeFactoryV2 is Ownable {
+contract BribeFactoryV2 is OwnableUpgradeable {
     address public last_bribe;
     address public voter;
 
-    constructor(address _voter) {
+    constructor() {}
+    function initialize(address _voter) initializer public {
+        __Ownable_init();
         voter = _voter;
     }
 

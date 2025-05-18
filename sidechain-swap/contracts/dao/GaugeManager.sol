@@ -107,10 +107,10 @@ contract GaugeManager is NonblockingLzApp, ReentrancyGuard {
             }
         }
 
-        string memory _type =  string.concat("Thena LP Fees: ", IERC20(_pool).symbol() );
+        string memory _type =  string.concat("MF LP Fees: ", IERC20(_pool).symbol() );
         address _internal_bribe = IBribeFactory(bribefactory).createBribe(owner(), tokenA, tokenB, _type);
 
-        // _type = string.concat("Thena Bribes: ", IERC20(_pool).symbol() );
+        // _type = string.concat("MF Bribes: ", IERC20(_pool).symbol() );
         address _external_bribe = address(0); // IBribeFactory(bribefactory).createBribe(owner(), tokenA, tokenB, _type);
 
         address _gauge = IGaugeFactory(gaugefactory).createGaugeV2(base, _ve, _pool, address(this), _internal_bribe, _external_bribe, address(0), isPair);
@@ -266,11 +266,6 @@ contract GaugeManager is NonblockingLzApp, ReentrancyGuard {
         require(msg.sender == emergencyCouncil);
         factory = _factory;
     }
-
-    // function setSidechainManager(uint16 _chainId, address _manager) external {
-    //     require(msg.sender == governor, "Only governor");
-    //     sidechainManager[_chainId] = _manager;
-    // }
 
     function killGaugeTotally(address _gauge) external {
         require(msg.sender == emergencyCouncil, "not emergency council");

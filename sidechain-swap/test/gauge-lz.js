@@ -47,7 +47,7 @@ describe("Gauge", function() {
     testTokens[0].connect(investor1).transfer(investor2.address, ethers.utils.parseUnits('100', 18));
     
     const ArtContract = await ethers.getContractFactory("VeArt");
-    ART = await ArtContract.deploy();
+    ART = await upgrades.deployProxy(ArtContract, []);
     await ART.deployed();
 
     const VEContract = await ethers.getContractFactory("VotingEscrow");
@@ -55,11 +55,11 @@ describe("Gauge", function() {
     await VE.deployed();
 
     const BRIBEContract = await ethers.getContractFactory("BribeFactoryV2");
-    BRIBE_F = await BRIBEContract.deploy(owner.address);
+    BRIBE_F = await upgrades.deployProxy(BRIBEContract, [owner.address]);
     await BRIBE_F.deployed();
 
     const GAUGEContract = await ethers.getContractFactory("GaugeFactoryV2");
-    GAUGE_F = await GAUGEContract.deploy();
+    GAUGE_F = await upgrades.deployProxy(GAUGEContract, []);
     await GAUGE_F.deployed();
 
     const VOTERContract = await ethers.getContractFactory("GaugeManager");

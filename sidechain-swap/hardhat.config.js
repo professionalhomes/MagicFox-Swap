@@ -3,6 +3,7 @@ require('hardhat-abi-exporter');
 require('hardhat-contract-sizer');
 require('@nomiclabs/hardhat-ethers');
 require("@nomiclabs/hardhat-etherscan");
+require('@openzeppelin/hardhat-upgrades');
 
 let secret = require("./secret.json");
 

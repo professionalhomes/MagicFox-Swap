@@ -8,11 +8,11 @@ import "./interfaces/IThena.sol";
 import "./interfaces/IVoter.sol";
 import "./interfaces/IVotingEscrow.sol";
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 // codifies the minting rules as per ve(3,3), abstracted from the token to support any token that allows minting
 
-contract Minter is IMinter, Ownable {
+contract Minter is IMinter, OwnableUpgradeable {
     
     bool public isFirstMint;
 
@@ -39,11 +39,15 @@ contract Minter is IMinter, Ownable {
 
     event Mint(address indexed sender, uint weekly, uint circulating_supply, uint circulating_emission);
 
-    constructor(
+    constructor() {}
+
+    function initialize(    
       address __voter, // the voting & distribution system
       address __ve, // the ve(3,3) system that will be locked into
       address __rewards_distributor // the distribution system that ensures users aren't diluted
-    ) {
+    ) initializer public {
+      __Ownable_init();
+
       _initializer = msg.sender;
       team = msg.sender;
 

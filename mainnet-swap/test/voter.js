@@ -53,7 +53,7 @@ describe("VoterV2", function() {
     await BRIBE_TOKEN.deployed();
     
     const ArtContract = await ethers.getContractFactory("VeArt");
-    ART = await ArtContract.deploy();
+    ART = await upgrades.deployProxy(ArtContract, []);
     await ART.deployed();
 
     const VEContract = await ethers.getContractFactory("VotingEscrow");
@@ -63,15 +63,15 @@ describe("VoterV2", function() {
     //await TOKEN.connect(investor1).approve(VE.address, ethers.constants.MaxUint256);
 
     const BRIBEContract = await ethers.getContractFactory("BribeFactoryV2");
-    BRIBE_F = await BRIBEContract.deploy(owner.address);
+    BRIBE_F = await upgrades.deployProxy(BRIBEContract, [owner.address]);
     await BRIBE_F.deployed();
 
     const GAUGEContract = await ethers.getContractFactory("GaugeFactoryV2");
-    GAUGE_F = await GAUGEContract.deploy();
+    GAUGE_F = await upgrades.deployProxy(GAUGEContract, []);
     await GAUGE_F.deployed();
 
     const VOTERContract = await ethers.getContractFactory("VoterV2_1");
-    VOTER = await VOTERContract.deploy(VE.address, PAIR_F.address, GAUGE_F.address, BRIBE_F.address, PROXY_OFT.address);
+    VOTER = await upgrades.deployProxy(VOTERContract, [VE.address, PAIR_F.address, GAUGE_F.address, BRIBE_F.address, PROXY_OFT.address]);
     await VOTER.deployed();
 
     await BRIBE_F.setVoter(VOTER.address);
@@ -81,7 +81,7 @@ describe("VoterV2", function() {
     await REWARD_DIST.deployed();
 
     const MINTERContract = await ethers.getContractFactory("Minter");
-    MINTER = await MINTERContract.deploy(VOTER.address, VE.address, REWARD_DIST.address);
+    MINTER = await upgrades.deployProxy(MINTERContract, [VOTER.address, VE.address, REWARD_DIST.address]);
     await MINTER.deployed();
 
     await VE.setVoter(VOTER.address);

@@ -15,11 +15,10 @@ import './interfaces/IVotingEscrow.sol';
 import "../lz/interfaces/ILayerZeroEndpoint.sol";
 import "hardhat/console.sol";
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-
-contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
+contract VoterV2_1 is IVoter, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     ILayerZeroEndpoint public constant lzEndpoint = ILayerZeroEndpoint(0x3c2269811836af69497E5F486A85D7316753cf62);
 
@@ -70,13 +69,17 @@ contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
     event Attach(address indexed owner, address indexed gauge, uint tokenId);
     event Detach(address indexed owner, address indexed gauge, uint tokenId);
 
-    constructor(
+    constructor() {}
+
+    function initialize(
         address __ve, 
         address _factory, 
         address  _gauges, 
         address _bribes,
         address _proxyOFT
-    ) {
+    ) initializer public {
+        __Ownable_init();
+        __ReentrancyGuard_init();
         _ve = __ve;
         factory = _factory;
         base = IVotingEscrow(__ve).token();

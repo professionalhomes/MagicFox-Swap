@@ -211,10 +211,10 @@ contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
             }
         }
 
-        string memory _type =  string.concat("Thena LP Fees: ", IERC20(_pool).symbol() );
+        string memory _type =  string.concat("MF LP Fees: ", IERC20(_pool).symbol() );
         address _internal_bribe = IBribeFactory(bribefactory).createBribe(owner(), tokenA, tokenB, _type);
 
-        _type = string.concat("Thena Bribes: ", IERC20(_pool).symbol() );
+        _type = string.concat("MF Bribes: ", IERC20(_pool).symbol() );
         address _external_bribe = IBribeFactory(bribefactory).createBribe(owner(), tokenA, tokenB, _type);
 
         address _gauge = IGaugeFactory(gaugefactory).createGaugeV2(base, _ve, _pool, address(this), _internal_bribe, _external_bribe, address(0), isPair);
@@ -437,9 +437,9 @@ contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
             address tokenB;
             (tokenA, tokenB) = IPair(_pool).tokens();
 
-            string memory _type =  string.concat("Thena LP Fees: ", IERC20(_pool).symbol() );
+            string memory _type =  string.concat("MF LP Fees: ", IERC20(_pool).symbol() );
             address _internal_bribe = IBribeFactory(bribefactory).createBribe(owner(), tokenA, tokenB, _type);
-            _type = string.concat("Thena Bribes: ", IERC20(_pool).symbol() );
+            _type = string.concat("MF Bribes: ", IERC20(_pool).symbol() );
             address _external_bribe = IBribeFactory(bribefactory).createBribe(owner(), tokenA, tokenB, _type);
             IERC20(base).approve(_gauge, type(uint).max);
             internal_bribes[_gauge] = _internal_bribe;

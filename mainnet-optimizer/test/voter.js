@@ -22,7 +22,7 @@ describe("VoterV2", function() {
     PAIR_F = await PAIRFContract.deploy();
     await PAIR_F.deployed();
 
-    const TOKENContract = await ethers.getContractFactory("Thena");
+    const TOKENContract = await ethers.getContractFactory("Token");
     TOKEN = await TOKENContract.deploy();
     await TOKEN.deployed();
     await TOKEN.initialMint(investor1.address);

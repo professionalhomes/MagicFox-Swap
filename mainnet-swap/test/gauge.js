@@ -3,7 +3,7 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("Gauge", function() {
-  let provider, VE, ART, TOKEN, ROUTER, GAUGE_F, BRIBE_F, BRIBE_TOKEN, REWARD_DIST, MINTER, VOTER, PAIR_F, DUMMYContract, owner, investor1, investor2;
+  let provider, VE, ART, TOKEN, PROXY_OFT, ROUTER, GAUGE_F, BRIBE_F, BRIBE_TOKEN, REWARD_DIST, MINTER, VOTER, PAIR_F, owner, investor1, investor2, lzEndpoint;
   const ONE_WEEK = 24 * 3600 * 7;
   let testTokens = [];
 
@@ -16,7 +16,7 @@ describe("Gauge", function() {
     let dayOfWeek = new Date(await time.latest() * 1000).getDay();
     await time.increase(60 * 60 * 24 * (7 - dayOfWeek)); 
 
-    [ owner, investor1, investor2  ] = await ethers.getSigners();
+    [ owner, investor1, investor2, lzEndpoint  ] = await ethers.getSigners();
 
     provider = ethers.getDefaultProvider();
 
@@ -28,6 +28,13 @@ describe("Gauge", function() {
     TOKEN = await TOKENContract.deploy();
     await TOKEN.deployed();
     await TOKEN.initialMint(investor1.address);
+
+    const PROXYOFTContract = await ethers.getContractFactory("ProxyOFT");
+    PROXY_OFT = await PROXYOFTContract.deploy(
+      lzEndpoint.address, // _lzEndpoint
+      TOKEN.address, // _token
+    );
+    await PROXY_OFT.deployed();
 
     let tmpToken;
     const DUMMYContract = await ethers.getContractFactory("DummyToken");
@@ -65,7 +72,7 @@ describe("Gauge", function() {
     await GAUGE_F.deployed();
 
     const VOTERContract = await ethers.getContractFactory("VoterV2_1");
-    VOTER = await VOTERContract.deploy(VE.address, PAIR_F.address, GAUGE_F.address, BRIBE_F.address);
+    VOTER = await VOTERContract.deploy(VE.address, PAIR_F.address, GAUGE_F.address, BRIBE_F.address, PROXY_OFT.address);
     await VOTER.deployed();
 
     await BRIBE_F.setVoter(VOTER.address);
@@ -104,20 +111,20 @@ describe("Gauge", function() {
   });
 
   it("Only governor can add gauge", async function() {
-      await VOTER.connect(owner).createGauge(testTokens[0].address);
-      await expect(VOTER.connect(investor1).createGauge(testTokens[1].address)).to.be.reverted;
+      await VOTER.connect(owner).createGauge(testTokens[0].address, 0);
+      await expect(VOTER.connect(investor1).createGauge(testTokens[1].address, 0)).to.be.reverted;
 
       VOTER.connect(owner).setGovernor(investor1.address);
 
-      await expect(VOTER.connect(owner).createGauge(testTokens[1].address)).to.be.reverted;
-      await VOTER.connect(investor1).createGauge(testTokens[1].address);
+      await expect(VOTER.connect(owner).createGauge(testTokens[1].address, 0)).to.be.reverted;
+      await VOTER.connect(investor1).createGauge(testTokens[1].address, 0);
   });
 
   it("Gauges can not be duplicated", async function() {
-      await VOTER.createGauge(testTokens[0].address);
-      await VOTER.createGauge(testTokens[1].address);
-      await expect(VOTER.createGauge(testTokens[0].address)).to.be.reverted;
-      await expect(VOTER.createGauge(testTokens[1].address)).to.be.reverted;
+      await VOTER.createGauge(testTokens[0].address, 0);
+      await VOTER.createGauge(testTokens[1].address, 0);
+      await expect(VOTER.createGauge(testTokens[0].address, 0)).to.be.reverted;
+      await expect(VOTER.createGauge(testTokens[1].address, 0)).to.be.reverted;
   });
 
   it("Test 3 ePoch flow", async function() {
@@ -137,10 +144,10 @@ describe("Gauge", function() {
     const NFT1 = await VE.tokenOfOwnerByIndex(investor1.address, 0);
     const NFT2 = await VE.tokenOfOwnerByIndex(investor2.address, 0);
 
-    await VOTER.createGauge(testTokens[0].address);
-    await VOTER.createGauge(testTokens[1].address);
-    await VOTER.createGauge(stablePair.address);
-    await VOTER.createGauge(volatilePair.address);
+    await VOTER.createGauge(testTokens[0].address, 0);
+    await VOTER.createGauge(testTokens[1].address, 0);
+    await VOTER.createGauge(stablePair.address, 0);
+    await VOTER.createGauge(volatilePair.address, 0);
 
     const gauge0_address = await VOTER.gauges(testTokens[0].address);
     const gauge1_address = await VOTER.gauges(testTokens[1].address);
@@ -293,7 +300,7 @@ describe("Gauge", function() {
 
 
   it("NFT can not be transferred after voting without resetting", async function() {
-    await VOTER.createGauge(testTokens[0].address);
+    await VOTER.createGauge(testTokens[0].address, 0);
     const gauge0_address = await VOTER.gauges(testTokens[0].address);
     const gauge0_bribes = await VOTER.external_bribes(gauge0_address);
 
@@ -319,7 +326,7 @@ describe("Gauge", function() {
     const NFT = await VE.tokenOfOwnerByIndex(investor1.address, 0);
     const bribe_amount = ethers.utils.parseUnits("100", 18);
 
-    await VOTER.createGauge(token.address);
+    await VOTER.createGauge(token.address, 0);
     const gaugeContract = await ethers.getContractFactory("GaugeV2");
     const gauge = await gaugeContract.attach(await VOTER.gauges(token.address));
     const gauge_bribes = await VOTER.external_bribes(gauge.address);

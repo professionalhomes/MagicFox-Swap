@@ -6,6 +6,7 @@ import "./interfaces/IMinter.sol";
 import "./interfaces/IRewardsDistributor.sol";
 import "./interfaces/IToken.sol";
 import "./interfaces/IVoter.sol";
+import "./interfaces/IBluechipVoter.sol";
 import "./interfaces/IVotingEscrow.sol";
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -34,6 +35,7 @@ contract Minter is IMinter, OwnableUpgradeable {
     
     IToken public _token;
     IVoter public _voter;
+    IBluechipVoter public _bluechip_voter;
     IVotingEscrow public _ve;
     IRewardsDistributor public _rewards_distributor;
 
@@ -43,6 +45,7 @@ contract Minter is IMinter, OwnableUpgradeable {
 
     function initialize(    
       address __voter, // the voting & distribution system
+      address __bluechip_voter, // voter managed by procotol owner
       address __ve, // the ve(3,3) system that will be locked into
       address __rewards_distributor // the distribution system that ensures users aren't diluted
     ) initializer public {
@@ -59,6 +62,7 @@ contract Minter is IMinter, OwnableUpgradeable {
 
       _token = IToken(IVotingEscrow(__ve).token());
       _voter = IVoter(__voter);
+      _bluechip_voter = IBluechipVoter(__bluechip_voter);
       _ve = IVotingEscrow(__ve);
       _rewards_distributor = IRewardsDistributor(__rewards_distributor);
 
@@ -184,8 +188,16 @@ contract Minter is IMinter, OwnableUpgradeable {
             _rewards_distributor.checkpoint_token(); // checkpoint token balance that was just minted in rewards distributor
             _rewards_distributor.checkpoint_total_supply(); // checkpoint supply
 
+            uint _bluechip = _gauge * 50 / 100;
+            _gauge -= _bluechip;
+
+            // 50% to regular gauges -- managed by voters
             _token.approve(address(_voter), _gauge);
             _voter.notifyRewardAmount(_gauge);
+
+            // 50% to bluechip gauges -- managed by protocol owner
+            _token.approve(address(_bluechip_voter), _bluechip);
+            _bluechip_voter.notifyRewardAmount(_bluechip);
 
             emit Mint(msg.sender, weekly, circulating_supply(), circulating_emission());
         }

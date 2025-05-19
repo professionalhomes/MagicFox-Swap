@@ -3,7 +3,7 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("Gauge", function() {
-  let provider, VE, ART, TOKEN, ROUTER, GAUGE_F, BRIBE_F, VOTER, PAIR_F, LZ_RECEIVER, owner, investor1, investor2, lzEndpoint;
+  let provider, VE, ART, TOKEN, ROUTER, GAUGE_F, BRIBE_F, VOTER, PAIR_F, owner, investor1, investor2, lzEndpoint;
   let mainGauge0, mainGauge1, mainGauge2; // main chain gauges
   const ONE_WEEK = 24 * 3600 * 7;
   let testTokens;
@@ -62,13 +62,9 @@ describe("Gauge", function() {
     GAUGE_F = await upgrades.deployProxy(GAUGEContract, []);
     await GAUGE_F.deployed();
 
-    const VOTERContract = await ethers.getContractFactory("VoterV2_1");
-    VOTER = await upgrades.deployProxy(VOTERContract, [VE.address, PAIR_F.address, GAUGE_F.address, BRIBE_F.address]);
+    const VOTERContract = await ethers.getContractFactory("GaugeManager");
+    VOTER = await VOTERContract.deploy(VE.address, PAIR_F.address, GAUGE_F.address, BRIBE_F.address, lzEndpoint.address);
     await VOTER.deployed();
-
-    const LZReceiverContract = await ethers.getContractFactory("LZReceiver");
-    LZ_RECEIVER = await LZReceiverContract.deploy(VOTER.address, lzEndpoint.address);
-    await LZ_RECEIVER.deployed();
 
     await BRIBE_F.setVoter(VOTER.address);
 
@@ -96,15 +92,15 @@ describe("Gauge", function() {
     await VOTER.connect(owner).createGauge(testTokens[0].address, mainGauge0.address);
     await VOTER.connect(owner).createGauge(testTokens[1].address, mainGauge1.address);
 
-    await TOKEN.whitelistVoter(VOTER.address, true);
+    await TOKEN.setGaugeManager(VOTER.address);
 
-    // srcAddress needs to be set the same way as in trusted remote
-    let srcAddressPayload = hre.ethers.utils.solidityPack(
-      ["address", "address"],
-      [owner.address, LZ_RECEIVER.address]
+    // await VOTER.setTrustedRemoteAddress(56, owner.address);
+    await VOTER.setTrustedRemote(56,
+      hre.ethers.utils.solidityPack(
+        ['address','address'],
+        [owner.address, VOTER.address]
+      )
     );
-
-    await LZ_RECEIVER.setTrustedRemote(102, srcAddressPayload);
 
     let timestamp = Math.ceil(new Date().getTime() / 1000);
 
@@ -118,7 +114,7 @@ describe("Gauge", function() {
       [ "uint256", "uint256", "address[]", "uint256[]" ], 
       [ timestamp, weeklyEmissions, [mainGauge0.address, mainGauge1.address, mainGauge2.address], [G_0_Emiss, G_1_Emiss, G_2_Emiss]] 
     );
-    await LZ_RECEIVER.connect(lzEndpoint).lzReceive(102, srcAddressPayload, 1, payload); // 102 -- bsc LZ internal chainId
+    await VOTER.connect(lzEndpoint).lzReceive(56, owner.address, 1, payload);
 
     const gauge0_address = await VOTER.gauges(testTokens[0].address);
     const gauge1_address = await VOTER.gauges(testTokens[1].address);
@@ -163,7 +159,7 @@ describe("Gauge", function() {
       [ "uint256", "uint256", "address[]", "uint256[]" ], 
       [ timestamp, weeklyEmissions, [mainGauge0.address, mainGauge1.address, mainGauge2.address], [G_0_Emiss, G_1_Emiss, G_2_Emiss]] 
     );
-    await LZ_RECEIVER.connect(lzEndpoint).lzReceive(102, srcAddressPayload, 1, payload); // 102 -- bsc LZ internal chainId
+    await VOTER.connect(lzEndpoint).lzReceive(56, owner.address, 1, payload);
     await VOTER.distribute(timestamp, [mainGauge0.address]);
 
     console.log('available emissions');

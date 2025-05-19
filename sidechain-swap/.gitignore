@@ -1,0 +1,7 @@
+secret.json
+node_modules/
+artifacts/
+cache/
+.tmp_salts_*
+*-addresses.txt
+*.DS_Store

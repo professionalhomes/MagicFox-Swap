@@ -9,7 +9,7 @@ import "./OFTCore.sol";
 
 // override decimal() function is needed
 contract OFT is OFTCore, ERC20, IOFT {
-    mapping(address => bool) public gaugeVoter;
+    address public gaugeManager;
 
     constructor(string memory _name, string memory _symbol, address _lzEndpoint) ERC20(_name, _symbol) OFTCore(_lzEndpoint) {}
 
@@ -37,13 +37,13 @@ contract OFT is OFTCore, ERC20, IOFT {
         return _amount;
     }
 
-    function whitelistVoter(address _voter, bool _whitelist) external onlyOwner {
-        require(_voter != address(0), 'Null address not allowed!');
-        gaugeVoter[_voter] = _whitelist;
+    function setGaugeManager(address _gaugeManager) external onlyOwner {
+        require(_gaugeManager != address(0), 'Null address not allowed!');
+        gaugeManager = _gaugeManager;
     }
 
     function mintWeeklyRewards(address _toAddress, uint _amount) external {
-        require(gaugeVoter[msg.sender], 'Unauthorized');
+        require(msg.sender == gaugeManager, 'Unauthorized');
         _mint(_toAddress, _amount);
     }
 }

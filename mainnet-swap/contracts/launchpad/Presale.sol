@@ -53,7 +53,7 @@ contract Presale is Ownable, ReentrancyGuard {
   uint256 public constant MAX_FOX_TO_DISTRIBUTE = 1_558_822 ether; // max FOX amount to distribute during the sale
   uint256 public constant MAX_SHROOM_TO_DISTRIBUTE = 3_116_000 ether; // max SHROOM amount to distribute during the sale
 
-  uint256 public constant VE_TOKEN_SHARE = 50; // ~1/2 of FOX/SHROOM bought is returned as veFOX/veSHROOM
+  uint256 public constant VE_TOKEN_SHARE = 40; // ~ 40% of FOX/SHROOM bought is returned as veFOX/veSHROOM
 
   address public immutable treasury; // treasury multisig, will receive raised amount
 
@@ -216,9 +216,9 @@ contract Presale is Ownable, ReentrancyGuard {
       emit NewRefEarning(referralAddress, refShareAmount);
     }
 
-    // 70% in FOX
-    uint256 allocationFOX = amount.mul(70).div(100);
-    // 30% in SHROOM
+    // 50% in FOX
+    uint256 allocationFOX = amount.mul(50).div(100);
+    // 50% in SHROOM
     uint256 allocationSHROOM = amount - allocationFOX;
 
     // update raised amounts

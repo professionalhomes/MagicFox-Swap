@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
+
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import './interfaces/IVoter.sol';
 import './interfaces/IVotingEscrow.sol';
 import './interfaces/IPair.sol';
 import './interfaces/IBribe.sol';
-import './interfaces/IStrategy.sol';
 import "./libraries/Math.sol";
 
 interface IRewarder {
@@ -23,7 +24,9 @@ interface IRewarder {
     ) external;
 }
 
-contract GaugeV2 is ERC20, ReentrancyGuard, Ownable {
+
+contract GaugeV2 is ReentrancyGuard, Ownable {
+    using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     bool public isForPair;
@@ -32,7 +35,6 @@ contract GaugeV2 is ERC20, ReentrancyGuard, Ownable {
     IERC20 public rewardToken;
     IVotingEscrow public _VE;
     IERC20 public TOKEN;
-    IStrategy public STRATEGY;
 
     address public DISTRIBUTION;
     address public gaugeRewarder;
@@ -52,6 +54,9 @@ contract GaugeV2 is ERC20, ReentrancyGuard, Ownable {
 
     mapping(address => uint256) public userRewardPerTokenPaid;
     mapping(address => uint256) public rewards;
+
+    uint256 public _totalSupply;
+    mapping(address => uint256) public balances;
 
     uint256 public derivedSupply;
     mapping(address => uint256) public derivedBalances;
@@ -79,19 +84,7 @@ contract GaugeV2 is ERC20, ReentrancyGuard, Ownable {
         _;
     }
 
-    constructor(
-        address _rewardToken,
-        address _ve,
-        address _token,
-        address _distribution,
-        address _internal_bribe,
-        address _external_bribe,
-        address _fees_collector,
-        bool _isForPair
-    )  ERC20(
-        string(abi.encodePacked("vefox ", ERC20(_token).name())),
-        string(abi.encodePacked("vf", ERC20(_token).symbol()))
-    ) {
+    constructor(address _rewardToken,address _ve,address _token,address _distribution, address _internal_bribe, address _external_bribe, address _fees_collector, bool _isForPair) {
         require(_internal_bribe == address(0) || _fees_collector == address(0), "invalid fee address");
         rewardToken = IERC20(_rewardToken);     // main reward
         _VE = IVotingEscrow(_ve);               // vested
@@ -104,11 +97,7 @@ contract GaugeV2 is ERC20, ReentrancyGuard, Ownable {
         fees_collector = _fees_collector;       // lp fees go here or to internal_bribe
 
         isForPair = _isForPair;                       // pair boolean, if false no claim_fees
-    }
 
-    function initStrategy(address _strategy) external {
-        require(address(STRATEGY) == address(0));
-        STRATEGY = IStrategy(_strategy);
     }
 
     ///@notice set distribution address (should be GaugeProxyL2)
@@ -132,38 +121,40 @@ contract GaugeV2 is ERC20, ReentrancyGuard, Ownable {
         rewarderPid = _pid;
     }
 
+    ///@notice total supply held
+    function totalSupply() public view returns (uint256) {
+        return _totalSupply;
+    }
+
+    ///@notice balance of a user
+    function balanceOf(address account) external view returns (uint256) {
+        return balances[account];
+    }
+
     ///@notice last time reward
     function lastTimeRewardApplicable() public view returns (uint256) {
         return Math.min(block.timestamp, periodFinish);
     }
 
-    ///@notice  reward for a single token
+    ///@notice  reward for a sinle token
     function rewardPerToken() public view returns (uint256) {
-        uint256 _bal = balance();
-        if (_bal == 0) {
+        if (_totalSupply == 0) {
             return rewardPerTokenStored;
         } else {
-            return rewardPerTokenStored + ((lastTimeRewardApplicable() - lastUpdateTime) * rewardRate *1e18 /derivedSupply);
+            return rewardPerTokenStored.add(lastTimeRewardApplicable().sub(lastUpdateTime).mul(rewardRate).mul(1e18).div(_totalSupply));
         }
     }
 
     ///@notice see earned rewards for user
     function earned(address account) public view returns (uint256) {
-        return derivedBalances[account] * (rewardPerToken() - userRewardPerTokenPaid[account]) / 1e18 + rewards[account];
+        return derivedBalances[account].mul(rewardPerToken().sub(userRewardPerTokenPaid[account])).div(1e18).add(rewards[account]);
     }
 
     ///@notice get total reward for the duration
     function rewardForDuration() external view returns (uint256) {
-        return rewardRate * DURATION;
+        return rewardRate.mul(DURATION);
     }
 
-    function balance() public view returns (uint256) {
-        return TOKEN.balanceOf(address(this)) + STRATEGY.balanceOf();
-    }
-
-    function getPricePerFullShare() public view returns (uint256) {
-        return totalSupply() == 0 ? 1e18 : balance() * 1e18 / totalSupply();
-    }
 
     ///@notice deposit all TOKEN of msg.sender
     function depositAll(uint256 tokenId) external {
@@ -175,20 +166,14 @@ contract GaugeV2 is ERC20, ReentrancyGuard, Ownable {
         _deposit(amount, msg.sender, tokenId);
     }
 
-    function earn() public {
-        uint256 _bal = TOKEN.balanceOf(address(this));
-        TOKEN.safeTransfer(address(STRATEGY), _bal);
-        STRATEGY.deposit();
-    }
-
     ///@notice deposit internal
-    function _deposit(uint256 _amount, address account, uint256 tokenId) internal nonReentrant updateReward(account) {
-        require(_amount > 0, "deposit(Gauge): cannot stake 0");
-        uint256 _pool = balance();
-        uint256 _before = TOKEN.balanceOf(address(this));
-        TOKEN.safeTransferFrom(account, address(this), _amount);
-        uint256 _after = TOKEN.balanceOf(address(this));
-        _amount = _after - _before; // Additional check for deflationary tokens
+    function _deposit(uint256 amount, address account, uint256 tokenId) internal nonReentrant updateReward(account) {
+        require(amount > 0, "deposit(Gauge): cannot stake 0");
+
+        balances[account] = balances[account].add(amount);
+        _totalSupply = _totalSupply.add(amount);
+
+        TOKEN.safeTransferFrom(account, address(this), amount);
 
         if (tokenId > 0) {
             require(_VE.ownerOf(tokenId) == account);
@@ -201,40 +186,31 @@ contract GaugeV2 is ERC20, ReentrancyGuard, Ownable {
             tokenId = tokenIds[account];
         }
 
-        if (address(gaugeRewarder) != address(0)) {
-            IRewarder(gaugeRewarder).onReward(rewarderPid, account, account, 0, balanceOf(account));
-        }
-
-        uint256 shares = 0;
-        if (totalSupply() == 0) {
-            shares = _amount;
-        } else {
-            shares = _amount * totalSupply() / _pool;
-        }
-        _mint(account, shares);
-
         uint _derivedBalance = derivedBalances[account];
         derivedSupply -= _derivedBalance;
-        _derivedBalance = derivedBalanceOf(account);
+        _derivedBalance = derivedBalance(account);
         derivedBalances[account] = _derivedBalance;
         derivedSupply += _derivedBalance;
 
-        earn();
-        emit Deposit(account, _amount);
+        if (address(gaugeRewarder) != address(0)) {
+            IRewarder(gaugeRewarder).onReward(rewarderPid, account, account, 0, balances[account]);
+        }
+
+        emit Deposit(account, amount);
     }
 
     ///@notice withdraw all token
     function withdrawAll() external {
-        withdraw(balanceOf(msg.sender));
+        withdraw(balances[msg.sender]);
     }
 
     ///@notice withdraw a certain amount of TOKEN
-    function withdraw(uint256 _shares) public {
+    function withdraw(uint256 amount) public {
         uint256 tokenId = 0;
-        if (_shares == balanceOf(msg.sender)) {
+        if (amount == balances[msg.sender]) {
             tokenId = tokenIds[msg.sender];
         }
-        _withdrawToken(_shares, tokenId);
+        _withdrawToken(amount, tokenId);
     }
 
     ///@notice withdraw a certain amount of TOKEN
@@ -243,29 +219,18 @@ contract GaugeV2 is ERC20, ReentrancyGuard, Ownable {
     }
 
     ///@notice withdraw internal
-    function _withdrawToken(uint256 _shares, uint256 tokenId) internal nonReentrant updateReward(msg.sender) {
-        require(balanceOf(msg.sender) > 0, "no balances");
+    function _withdrawToken(uint256 amount, uint256 tokenId) internal nonReentrant updateReward(msg.sender) {
+        require(_totalSupply.sub(amount) >= 0, "supply < 0");
+        require(balances[msg.sender] > 0, "no balances");
+
+        _totalSupply = _totalSupply.sub(amount);
+        balances[msg.sender] = balances[msg.sender].sub(amount);
 
         if (address(gaugeRewarder) != address(0)) {
-            IRewarder(gaugeRewarder).onReward(rewarderPid, msg.sender, msg.sender, 0, balanceOf(msg.sender));
+            IRewarder(gaugeRewarder).onReward(rewarderPid, msg.sender, msg.sender, 0, balances[msg.sender]);
         }
 
-        uint256 r = (balance() * _shares) / totalSupply();
-        _burn(msg.sender, _shares);
-
-        uint256 b = TOKEN.balanceOf(address(this));
-
-        if (b < r) {
-            uint _withdraw = r - b;
-            STRATEGY.withdraw(_withdraw);
-            uint _after = TOKEN.balanceOf(address(this));
-            uint _diff = _after - b;
-            if (_diff < _withdraw) {
-                r = b + _diff;
-            }
-        }
-
-        TOKEN.safeTransfer(msg.sender, r);
+        TOKEN.safeTransfer(msg.sender, amount);
 
         if (tokenId > 0) {
             require(tokenId == tokenIds[msg.sender]);
@@ -277,38 +242,38 @@ contract GaugeV2 is ERC20, ReentrancyGuard, Ownable {
 
         uint _derivedBalance = derivedBalances[msg.sender];
         derivedSupply -= _derivedBalance;
-        _derivedBalance = derivedBalanceOf(msg.sender);
+        _derivedBalance = derivedBalance(msg.sender);
         derivedBalances[msg.sender] = _derivedBalance;
         derivedSupply += _derivedBalance;
 
-        emit Withdraw(msg.sender, r);
+        emit Withdraw(msg.sender, amount);
     }
 
-    function derivedBalanceOf(address account) public view returns (uint) {
+    function derivedBalance(address account) public view returns (uint) {
         uint _tokenId = tokenIds[account];
-        uint _shares = balanceOf(account);
-        uint _derived = _shares * 40 / 100;
+        uint _balance = balances[account];
+        uint _derived = _balance * 40 / 100;
         uint _adjusted = 0;
         uint _supply = _VE.totalSupply();
         if (account == _VE.ownerOf(_tokenId) && _supply > 0) {
             _adjusted = _VE.balanceOfNFT(_tokenId);
-            _adjusted = (totalSupply() * _adjusted / _supply) * 60 / 100;
+            _adjusted = (_totalSupply * _adjusted / _supply) * 60 / 100;
         }
-        return Math.min((_derived + _adjusted), _shares);
+        return Math.min((_derived + _adjusted), _balance);
     }
 
     ///@notice withdraw all TOKEN and harvest rewardToken
     function withdrawAllAndHarvest() external {
-        withdraw(balanceOf(msg.sender));
+        withdraw(balances[msg.sender]);
         getReward();
     }
 
     function updateDerivedBalance() external updateReward(msg.sender) {
-        require(balanceOf(msg.sender) > 0, "no balances");
+        require(balances[msg.sender] > 0, "no balances");
 
         uint _derivedBalance = derivedBalances[msg.sender];
         derivedSupply -= _derivedBalance;
-        _derivedBalance = derivedBalanceOf(msg.sender);
+        _derivedBalance = derivedBalance(msg.sender);
         derivedBalances[msg.sender] = _derivedBalance;
         derivedSupply += _derivedBalance;
     }
@@ -323,7 +288,7 @@ contract GaugeV2 is ERC20, ReentrancyGuard, Ownable {
         }
 
         if (gaugeRewarder != address(0)) {
-            IRewarder(gaugeRewarder).onReward(rewarderPid, msg.sender, msg.sender, reward, balanceOf(msg.sender));
+            IRewarder(gaugeRewarder).onReward(rewarderPid, msg.sender, msg.sender, reward, balances[msg.sender]);
         }
     }
 
@@ -337,22 +302,22 @@ contract GaugeV2 is ERC20, ReentrancyGuard, Ownable {
         rewardToken.safeTransferFrom(DISTRIBUTION, address(this), reward);
 
         if (block.timestamp >= periodFinish) {
-            rewardRate = reward / DURATION;
+            rewardRate = reward.div(DURATION);
         } else {
-            uint256 remaining = periodFinish - block.timestamp;
-            uint256 leftover = remaining * rewardRate;
-            rewardRate = (reward + leftover) / DURATION;
+            uint256 remaining = periodFinish.sub(block.timestamp);
+            uint256 leftover = remaining.mul(rewardRate);
+            rewardRate = reward.add(leftover).div(DURATION);
         }
 
         // Ensure the provided reward amount is not more than the balance in the contract.
         // This keeps the reward rate in the right range, preventing overflows due to
         // very high values of rewardRate in the earned and rewardsPerToken functions;
         // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
-        uint256 rewardBalance = rewardToken.balanceOf(address(this));
-        require(rewardRate <= rewardBalance / DURATION, "Provided reward too high");
+        uint256 balance = rewardToken.balanceOf(address(this));
+        require(rewardRate <= balance.div(DURATION), "Provided reward too high");
 
         lastUpdateTime = block.timestamp;
-        periodFinish = block.timestamp + DURATION;
+        periodFinish = block.timestamp.add(DURATION);
         emit RewardAdded(reward);
     }
 

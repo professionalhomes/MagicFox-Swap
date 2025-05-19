@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.8.13;
 
-import "./interfaces/IToken.sol";
+import "./interfaces/IThena.sol";
 
-contract Token is IToken {
+contract Thena is IThena {
 
-    string public constant name = "Kathy";
-    string public constant symbol = "KAT";
+    string public constant name = "THENA";
+    string public constant symbol = "THE";
     uint8 public constant decimals = 18;
     uint public totalSupply = 0;
 

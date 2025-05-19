@@ -39,7 +39,7 @@ describe("Swap", function() {
 
         // VeArt
         const veartContract = await ethers.getContractFactory("VeArt");
-        veart = await upgrades.deployProxy(veartContract, []);
+        veart = await veartContract.deploy();
         await veart.deployed();
 
         // Voting Escrow

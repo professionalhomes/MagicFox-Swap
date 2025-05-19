@@ -3,7 +3,7 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("VoterV2", function() {
-  let provider, VE, ART, TOKEN, PROXY_OFT, GAUGE_F, BRIBE_F, BRIBE_TOKEN, REWARD_DIST, MINTER, VOTER, PAIR_F, owner, investor1, investor2, lzEndpoint;
+  let provider, VE, ART, TOKEN, GAUGE_F, BRIBE_F, BRIBE_TOKEN, REWARD_DIST, MINTER, VOTER, PAIR_F, DUMMYContract, owner, investor1, investor2;
   const ONE_WEEK = 24 * 3600 * 7;
   let testTokens = []
 
@@ -12,7 +12,7 @@ describe("VoterV2", function() {
   });
 
   beforeEach(async () => {
-    [ owner, investor1, investor2, lzEndpoint ] = await ethers.getSigners();
+    [ owner, investor1, investor2  ] = await ethers.getSigners();
 
     provider = ethers.getDefaultProvider();
 
@@ -20,18 +20,10 @@ describe("VoterV2", function() {
     PAIR_F = await PAIRFContract.deploy();
     await PAIR_F.deployed();
 
-    const TOKENContract = await ethers.getContractFactory("Token");
+    const TOKENContract = await ethers.getContractFactory("Thena");
     TOKEN = await TOKENContract.deploy();
     await TOKEN.deployed();
     await TOKEN.initialMint(investor1.address);
-
-    const PROXYOFTContract = await ethers.getContractFactory("ProxyOFT");
-    PROXY_OFT = await PROXYOFTContract.deploy(
-      lzEndpoint.address, // _lzEndpoint
-      TOKEN.address, // _token
-    );
-    await PROXY_OFT.deployed();
-
 
     let tmpToken;
     const DUMMYContract = await ethers.getContractFactory("DummyToken");
@@ -53,7 +45,7 @@ describe("VoterV2", function() {
     await BRIBE_TOKEN.deployed();
     
     const ArtContract = await ethers.getContractFactory("VeArt");
-    ART = await upgrades.deployProxy(ArtContract, []);
+    ART = await ArtContract.deploy();
     await ART.deployed();
 
     const VEContract = await ethers.getContractFactory("VotingEscrow");
@@ -63,15 +55,15 @@ describe("VoterV2", function() {
     //await TOKEN.connect(investor1).approve(VE.address, ethers.constants.MaxUint256);
 
     const BRIBEContract = await ethers.getContractFactory("BribeFactoryV2");
-    BRIBE_F = await upgrades.deployProxy(BRIBEContract, [owner.address]);
+    BRIBE_F = await BRIBEContract.deploy(owner.address);
     await BRIBE_F.deployed();
 
     const GAUGEContract = await ethers.getContractFactory("GaugeFactoryV2");
-    GAUGE_F = await upgrades.deployProxy(GAUGEContract, []);
+    GAUGE_F = await GAUGEContract.deploy();
     await GAUGE_F.deployed();
 
     const VOTERContract = await ethers.getContractFactory("VoterV2_1");
-    VOTER = await upgrades.deployProxy(VOTERContract, [VE.address, PAIR_F.address, GAUGE_F.address, BRIBE_F.address, PROXY_OFT.address]);
+    VOTER = await VOTERContract.deploy(VE.address, PAIR_F.address, GAUGE_F.address, BRIBE_F.address);
     await VOTER.deployed();
 
     await BRIBE_F.setVoter(VOTER.address);
@@ -81,7 +73,7 @@ describe("VoterV2", function() {
     await REWARD_DIST.deployed();
 
     const MINTERContract = await ethers.getContractFactory("Minter");
-    MINTER = await upgrades.deployProxy(MINTERContract, [VOTER.address, VE.address, REWARD_DIST.address]);
+    MINTER = await MINTERContract.deploy(VOTER.address, VE.address, REWARD_DIST.address);
     await MINTER.deployed();
 
     await VE.setVoter(VOTER.address);
@@ -102,12 +94,12 @@ describe("VoterV2", function() {
   it("Create gauge, bribe, vote,/*  distributeAll", async function() {
     // Create gauge
     console.log(`---- createGauge 0 ----`);
-    await VOTER.createGauge(testTokens[0].address, 0);
-    await expect(VOTER.createGauge(testTokens[0].address, 0)).to.be.revertedWith('exists');
+    await VOTER.createGauge(testTokens[0].address);
+    await expect(VOTER.createGauge(testTokens[0].address)).to.be.revertedWith('exists');
     expect(await VOTER.pools(0)).to.equal(testTokens[0].address);
 
     console.log(`---- createGauge 1 ----`);
-    await VOTER.createGauge(testTokens[1].address, 0);
+    await VOTER.createGauge(testTokens[1].address);
     expect(await VOTER.pools(1)).to.equal(testTokens[1].address);
 
     const gauge0_address = await VOTER.gauges(testTokens[0].address);
@@ -184,7 +176,7 @@ describe("VoterV2", function() {
 
     // Create gauge
     console.log(`\n---- createGauge 0 ----`);
-    await VOTER.createGauge(testTokens[0].address, 0);
+    await VOTER.createGauge(testTokens[0].address);
     const tokenId0 = await VE.tokenOfOwnerByIndex(investor1.address, 0);
 
     const gauge0_address = await VOTER.gauges(testTokens[0].address);
@@ -233,4 +225,15 @@ describe("VoterV2", function() {
     console.log(`\n---- vote ----`);
     await VOTER.connect(investor2).vote(tokenId0, [testTokens[0].address, testTokens[1].address], [1000, 100]);
   });
+
+  /*
+  it("Change royalties", async function() {
+    expect(await CC.royaltiesFees()).to.equal(5);
+
+    await expect(CC.connect(account1).setRoyaltiesFees(10)
+    ).to.be.revertedWith('Ownable: caller is not the owner');
+
+    await CC.setRoyaltiesFees(10);
+    expect(await CC.royaltiesFees()).to.equal(10);
+  });*/
 });

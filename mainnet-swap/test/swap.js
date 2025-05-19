@@ -360,4 +360,57 @@ describe("Swap", function() {
         let totalFeeExpected = tradeAmount.mul(100).div(10000);
         expect(totalFee).to.equal(totalFeeExpected);
     });
+
+    it("Generate permit for gasless approval (for removeLiquidityWithPermit)", async function() {
+        const pairAddress = await pairFactory.getPair(tokenA.address, tokenB.address, true);
+
+        const pairContract = await ethers.getContractFactory("Pair");
+        const pair = pairContract.attach(pairAddress);
+
+        const lpName = await pair.name();
+        const valueToSpend = ethers.utils.parseUnits("100", 18);
+        const deadline = 1807228800;
+    
+        const Permit = [
+            { name: 'owner', type: 'address' },
+            { name: 'spender', type: 'address' },
+            { name: 'value', type: 'uint256' },
+            { name: 'nonce', type: 'uint256' },
+            { name: 'deadline', type: 'uint256' },
+        ]
+    
+        const domain = {
+            name: lpName,
+            version: '1',
+            chainId: 31337, // Default hardhat chainId
+            verifyingContract: pair.address,
+        };
+        
+        // The named list of all type definitions
+        const types = {
+            Permit
+        };
+        
+        // The data to sign
+        const value = {
+            owner: trader.address,
+            spender: router.address,
+            value: valueToSpend,
+            nonce: ethers.utils.hexlify(await pair.nonces(trader.address)),
+            deadline: deadline,
+        };
+        
+        signature = await trader._signTypedData(domain, types, value);
+        const splitted = ethers.utils.splitSignature( signature );
+
+        await pair.connect(trader).permit(
+            trader.address, 
+            router.address, 
+            valueToSpend, 
+            deadline, 
+            splitted.v, 
+            splitted.r, 
+            splitted.s
+        );
+    });
 });

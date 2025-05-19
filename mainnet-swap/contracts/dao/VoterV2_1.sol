@@ -15,11 +15,10 @@ import './interfaces/IVotingEscrow.sol';
 import "../lz/interfaces/ILayerZeroEndpoint.sol";
 import "hardhat/console.sol";
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-
-contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
+contract VoterV2_1 is IVoter, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     ILayerZeroEndpoint public constant lzEndpoint = ILayerZeroEndpoint(0x3c2269811836af69497E5F486A85D7316753cf62);
 
@@ -70,13 +69,17 @@ contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
     event Attach(address indexed owner, address indexed gauge, uint tokenId);
     event Detach(address indexed owner, address indexed gauge, uint tokenId);
 
-    constructor(
+    constructor() {}
+
+    function initialize(
         address __ve, 
         address _factory, 
         address  _gauges, 
         address _bribes,
         address _proxyOFT
-    ) {
+    ) initializer public {
+        __Ownable_init();
+        __ReentrancyGuard_init();
         _ve = __ve;
         factory = _factory;
         base = IVotingEscrow(__ve).token();
@@ -226,10 +229,10 @@ contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
             }
         }
 
-        string memory _type =  string.concat("Thena LP Fees: ", IERC20(_pool).symbol() );
+        string memory _type =  string.concat("MF LP Fees: ", IERC20(_pool).symbol() );
         address _internal_bribe = IBribeFactory(bribefactory).createBribe(owner(), tokenA, tokenB, _type);
 
-        _type = string.concat("Thena Bribes: ", IERC20(_pool).symbol() );
+        _type = string.concat("MF Bribes: ", IERC20(_pool).symbol() );
         address _external_bribe = IBribeFactory(bribefactory).createBribe(owner(), tokenA, tokenB, _type);
 
         address _gauge = IGaugeFactory(gaugefactory).createGaugeV2(base, _ve, _pool, address(this), _internal_bribe, _external_bribe, address(0), isPair);
@@ -377,13 +380,18 @@ contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
         }
     }
 
-    function distributeSidechain(uint16 chainId, uint256 period, uint256 dstGasLimit) public payable {
+    function distributeSidechainAll(uint16 chainId, uint256 period, uint256 dstGasLimit) external payable {
+        distributeSidechain(chainId, period, dstGasLimit, 0, chainGauges[chainId].length);
+    }
+
+    function distributeSidechain(uint16 chainId, uint256 period, uint256 dstGasLimit, uint256 from, uint256 to) public payable {
         require(chainId > 0 && chainId != block.chainid, "invalid chainId");
         address _gauge;
         uint256 _totalClaimable;
-        uint256[] memory _claimable = new uint256[](chainGauges[chainId].length);
-        address[] memory _gauges = new address[](chainGauges[chainId].length);
-        for (uint i = 0; i < chainGauges[chainId].length; i++) {
+        uint256 gaugesToProcess = to - from;
+        uint256[] memory _claimable = new uint256[](gaugesToProcess);
+        address[] memory _gauges = new address[](gaugesToProcess);
+        for (uint i = from; i < to; i++) {
             _gauge = chainGauges[chainId][i];
             _gauges[i] = _gauge;
             _claimable[i] = epochBridgeData[period][_gauge];
@@ -393,7 +401,7 @@ contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
 
         if (_totalClaimable > 0) {
             // Bridge rewards & array with claimable amounts per gauge using LZ
-            bytes memory lzPayload = abi.encode(_gauges, _claimable);
+            bytes memory lzPayload = abi.encode(IMinter(minter).active_period(), _totalClaimable, _gauges, _claimable);
 
             bytes memory trustedPath = abi.encodePacked(sidechainManager[chainId], address(this));
             bytes memory adapterParams = abi.encodePacked(uint16(1), dstGasLimit); // has to be at least 200_000
@@ -495,9 +503,9 @@ contract VoterV2_1 is IVoter, Ownable, ReentrancyGuard {
             address tokenB;
             (tokenA, tokenB) = IPair(_pool).tokens();
 
-            string memory _type =  string.concat("Thena LP Fees: ", IERC20(_pool).symbol() );
+            string memory _type =  string.concat("MF LP Fees: ", IERC20(_pool).symbol() );
             address _internal_bribe = IBribeFactory(bribefactory).createBribe(owner(), tokenA, tokenB, _type);
-            _type = string.concat("Thena Bribes: ", IERC20(_pool).symbol() );
+            _type = string.concat("MF Bribes: ", IERC20(_pool).symbol() );
             address _external_bribe = IBribeFactory(bribefactory).createBribe(owner(), tokenA, tokenB, _type);
             IERC20(base).approve(_gauge, type(uint).max);
             internal_bribes[_gauge] = _internal_bribe;

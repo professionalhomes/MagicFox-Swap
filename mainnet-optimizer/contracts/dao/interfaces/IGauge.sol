@@ -10,6 +10,5 @@ interface IGauge {
     function balanceOf(address _account) external view returns (uint);
     function isForPair() external view returns (bool);
     function totalSupply() external view returns (uint);
-    function earned(address token, address account) external view returns (uint);
-    
+    function earned(address token, address account) external view returns (uint);   
 }

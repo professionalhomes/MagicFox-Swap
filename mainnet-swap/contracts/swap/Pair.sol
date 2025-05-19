@@ -8,7 +8,6 @@ import './interfaces/IPairCallee.sol';
 import './PairFactory.sol';
 import './PairFees.sol';
 
-
 // The base pair of pools, either stable or volatile
 contract Pair is IPair {
 

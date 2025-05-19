@@ -1,11 +1,10 @@
 const hre = require("hardhat");
 
 async function main() {
-    const addresses = hre.network.config.constants;
     const ContractF = await hre.ethers.getContractFactory("Router");
     const contr = await ContractF.deploy(
-        addresses.pairFactory, // factory
-        addresses.weth, // weth
+        "0x6CE2738Ce9903111869C1dd23e4286B1d9992344", // factory
+        "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", // weth
     );
 
     await contr.deployed();

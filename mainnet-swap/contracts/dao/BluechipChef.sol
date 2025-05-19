@@ -2,7 +2,7 @@
 pragma solidity 0.8.13;
 
 import './libraries/Math.sol';
-import './interfaces/IBluechipVoter.sol';
+import './interfaces/IBluechipChef.sol';
 import './interfaces/IGauge.sol';
 import './interfaces/IGaugeFactory.sol';
 import './interfaces/IERC20.sol';
@@ -10,20 +10,17 @@ import './interfaces/IMinter.sol';
 import './interfaces/IPair.sol';
 import './interfaces/IPairFactory.sol';
 import './interfaces/IVotingEscrow.sol';
-import "../lz/interfaces/ILayerZeroEndpoint.sol";
 import "hardhat/console.sol";
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
-    ILayerZeroEndpoint public constant lzEndpoint = ILayerZeroEndpoint(0x3c2269811836af69497E5F486A85D7316753cf62);
+contract BluechipChef is IBluechipChef, Ownable, ReentrancyGuard {
 
     address public _ve; // the ve token that governs these contracts
     address public factory; // the PairFactory
     address internal base;
-    address public proxyOFT;
     address public gaugefactory;
     uint internal constant DURATION = 7 days; // rewards are released over 7 days
     address public minter;
@@ -40,10 +37,6 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
 
     address[] public pools; // all pools viable for incentives
     mapping(address => address) public gauges; // pool => gauge
-    mapping(address => uint) public gaugeChain; // gauge => uint
-    mapping(uint16 => address) public sidechainManager; // chain => gauge manager
-    mapping(uint16 => address[]) public chainGauges; // chain => gauge list
-    mapping(uint => mapping(address => uint)) public epochBridgeData; // epoch => gauge => claimable
     mapping(address => uint) public gaugesDistributionTimestmap;
     mapping(address => address) public poolForGauge; // gauge => pool
     mapping(address => uint256) public weights; // pool => weight
@@ -66,27 +59,16 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
     event Attach(address indexed owner, address indexed gauge, uint tokenId);
     event Detach(address indexed owner, address indexed gauge, uint tokenId);
 
-    constructor() {}
-
-    function initialize(
-        address __ve, 
-        address _factory, 
-        address  _gauges,
-        address _proxyOFT,
-        address _fees_collector
-    ) initializer public {
-        __Ownable_init();
-        __ReentrancyGuard_init();
+    constructor(address __ve, address _factory, address _gauges, address _fees_collector) {
         _ve = __ve;
         factory = _factory;
         base = IVotingEscrow(__ve).token();
-        proxyOFT = _proxyOFT;
         gaugefactory = _gauges;
         minter = msg.sender;
         governor = msg.sender;
         emergencyCouncil = msg.sender;
         fees_collector = _fees_collector;
-    }     
+    }      
 
     function _initialize(address _minter) external {
         require(msg.sender == minter || msg.sender == emergencyCouncil);
@@ -108,8 +90,7 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
         emergencyCouncil = _council;
     }
 
-    function reset() external nonReentrant {
-        require(msg.sender == governor, "Only governor");
+    function reset() external onlyOwner nonReentrant {
         //require((block.timestamp / DURATION) * DURATION > lastVoted[VOTER_TOKEN_ID], "TOKEN_ALREADY_VOTED_THIS_EPOCH");
         lastVoted[VOTER_TOKEN_ID] = block.timestamp;
         _reset();
@@ -141,8 +122,7 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
         delete poolVote[VOTER_TOKEN_ID];
     }
 
-    function poke() external nonReentrant {
-        require(msg.sender == governor, "Only governor");
+    function poke() external onlyOwner nonReentrant {
         //require((block.timestamp / DURATION) * DURATION > lastVoted[VOTER_TOKEN_ID], "TOKEN_ALREADY_VOTED_THIS_EPOCH");
         address[] memory _poolVote = poolVote[VOTER_TOKEN_ID];
         uint _poolCnt = _poolVote.length;
@@ -192,15 +172,14 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
     }
 
 
-    function vote(address[] calldata _poolVote, uint256[] calldata _weights) external nonReentrant {
-        require(msg.sender == governor, "Only governor");
+    function vote(address[] calldata _poolVote, uint256[] calldata _weights) external onlyOwner nonReentrant {
         //require((block.timestamp / DURATION) * DURATION > lastVoted[VOTER_TOKEN_ID], "TOKEN_ALREADY_VOTED_THIS_EPOCH");
         require(_poolVote.length == _weights.length);
         lastVoted[VOTER_TOKEN_ID] = block.timestamp;
         _vote(_poolVote, _weights);
     }
 
-    function createGauge(address _pool, uint16 chainId) external returns (address) {
+    function createGauge(address _pool) external returns (address) {
         require(msg.sender == governor, "Only governor");
         require(gauges[_pool] == address(0x0), "exists");
         bool isPair = IPairFactory(factory).isPair(_pool);
@@ -212,11 +191,6 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
         }
 
         address _gauge = IGaugeFactory(gaugefactory).createGaugeV2(base, _ve, _pool, address(this), address(0), address(0), fees_collector, isPair);
-
-        if(chainId > 0 && chainId != block.chainid) {
-            gaugeChain[_gauge] = chainId;
-            chainGauges[chainId].push(_gauge);
-        }
 
         IERC20(base).approve(_gauge, type(uint).max);
         gauges[_pool] = _gauge;
@@ -339,39 +313,6 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
         }
     }
 
-    function distributeSidechainAll(uint16 chainId, uint256 period, uint256 dstGasLimit) external payable {
-        distributeSidechain(chainId, period, dstGasLimit, 0, chainGauges[chainId].length);
-    }
-
-    function distributeSidechain(uint16 chainId, uint256 period, uint256 dstGasLimit, uint256 from, uint256 to) public payable {
-        require(chainId > 0 && chainId != block.chainid, "invalid chainId");
-        address _gauge;
-        uint256 _totalClaimable;
-        uint256 gaugesToProcess = to - from;
-        uint256[] memory _claimable = new uint256[](gaugesToProcess);
-        address[] memory _gauges = new address[](gaugesToProcess);
-        for (uint i = from; i < to; i++) {
-            _gauge = chainGauges[chainId][i];
-            _gauges[i] = _gauge;
-            _claimable[i] = epochBridgeData[period][_gauge];
-            _totalClaimable += epochBridgeData[period][_gauge];
-            epochBridgeData[period][_gauge] = 0;
-        }
-
-        if (_totalClaimable > 0) {
-            // Bridge rewards & array with claimable amounts per gauge using LZ
-            bytes memory lzPayload = abi.encode(IMinter(minter).active_period(), _totalClaimable, _gauges, _claimable);
-
-            bytes memory trustedPath = abi.encodePacked(sidechainManager[chainId], address(this));
-            bytes memory adapterParams = abi.encodePacked(uint16(1), dstGasLimit); // has to be at least 200_000
-
-            lzEndpoint.send{value: msg.value}(chainId, trustedPath, lzPayload, payable(msg.sender), address(0), adapterParams);
-
-            // We also need to send tokens to ProxyOFT contract on main chain
-            IERC20(base).transfer(proxyOFT, _totalClaimable);
-        }
-    }
-
     function distribute(address _gauge) public nonReentrant {
         IMinter(minter).update_period();
         _updateFor(_gauge); // should set claimable to 0 if killed
@@ -382,14 +323,9 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
         // distribute only if claimable is > 0 and currentEpoch != lastepoch
         if (_claimable > 0 && lastTimestamp < currentTimestamp) {
             claimable[_gauge] = 0;
-            if (gaugeChain[_gauge] == 0) {
-                IGauge(_gauge).notifyRewardAmount(base, _claimable);
-                emit DistributeReward(msg.sender, _gauge, _claimable);
-            } else {
-                // save for later bridging in bulk
-                epochBridgeData[currentTimestamp][_gauge] = _claimable; 
-            }
+            IGauge(_gauge).notifyRewardAmount(base, _claimable);
             gaugesDistributionTimestmap[_gauge] = currentTimestamp;
+            emit DistributeReward(msg.sender, _gauge, _claimable);
         }
     }
 
@@ -424,11 +360,6 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
     function setPairFactory(address _factory) external {
         require(msg.sender == emergencyCouncil);
         factory = _factory;
-    }
-
-    function setSidechainManager(uint16 _chainId, address _manager) external {
-        require(msg.sender == governor, "Only governor");
-        sidechainManager[_chainId] = _manager;
     }
 
     function killGaugeTotally(address _gauge) external {

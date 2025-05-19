@@ -3,8 +3,7 @@ const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
 
 describe("Gauge", function() {
-  let provider, VE, ART, TOKEN, PROXY_OFT, ROUTER, GAUGE_F, BRIBE_F, BRIBE_TOKEN;
-  let REWARD_DIST, MINTER, VOTER, BLUECHIP_VOTER, PAIR_F, owner, investor1, investor2, lzEndpoint;
+  let provider, VE, ART, TOKEN, PROXY_OFT, ROUTER, GAUGE_F, BRIBE_F, BRIBE_TOKEN, REWARD_DIST, MINTER, VOTER, PAIR_F, owner, investor1, investor2, lzEndpoint;
   const ONE_WEEK = 24 * 3600 * 7;
   let testTokens = [];
 
@@ -17,7 +16,7 @@ describe("Gauge", function() {
     let dayOfWeek = new Date(await time.latest() * 1000).getDay();
     await time.increase(60 * 60 * 24 * (7 - dayOfWeek)); 
 
-    [ owner, investor1, investor2, lzEndpoint, bluechipFeeCollector ] = await ethers.getSigners();
+    [ owner, investor1, investor2, lzEndpoint  ] = await ethers.getSigners();
 
     provider = ethers.getDefaultProvider();
 
@@ -78,28 +77,17 @@ describe("Gauge", function() {
 
     await BRIBE_F.setVoter(VOTER.address);
 
-    const BLUECHIP_VOTERContract = await ethers.getContractFactory("BluechipVoter");
-    BLUECHIP_VOTER = await upgrades.deployProxy(BLUECHIP_VOTERContract, [
-      VE.address, 
-      PAIR_F.address, 
-      GAUGE_F.address, 
-      PROXY_OFT.address, 
-      bluechipFeeCollector.address
-    ]);
-    await BLUECHIP_VOTER.deployed();
-
     const RDContract = await ethers.getContractFactory("RewardsDistributor");
     REWARD_DIST = await RDContract.deploy(VE.address, TOKEN.address);
     await REWARD_DIST.deployed();
 
     const MINTERContract = await ethers.getContractFactory("Minter");
-    MINTER = await upgrades.deployProxy(MINTERContract, [VOTER.address, BLUECHIP_VOTER.address, VE.address, REWARD_DIST.address]);
+    MINTER = await upgrades.deployProxy(MINTERContract, [VOTER.address, VE.address, REWARD_DIST.address]);
     await MINTER.deployed();
 
     await VE.setVoter(VOTER.address);
     await TOKEN.setMinter(MINTER.address);
     await VOTER.setMinter(MINTER.address);
-    await BLUECHIP_VOTER.setMinter(MINTER.address);
     await REWARD_DIST.setDepositor(MINTER.address);
 
     await MINTER._initialize([], [], 0);
@@ -120,13 +108,6 @@ describe("Gauge", function() {
     for (let i = 0; i < testTokens.length; i++) {
       await testTokens[i].connect(investor1).approve(ROUTER.address, ethers.constants.MaxUint256);
     };
-
-    // Add one gauge to make it work -- prevent division by zero totalWeight
-    await BLUECHIP_VOTER.createGauge(testTokens[0].address, 0);
-    await BLUECHIP_VOTER.connect(owner).vote(
-      [testTokens[0].address],
-      [100]
-    );
   });
 
   it("Only governor can add gauge", async function() {

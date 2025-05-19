@@ -7,7 +7,6 @@ require('@openzeppelin/hardhat-upgrades');
 
 require('./tasks/address-generator');
 let secret = require("./secret.json");
-const constants = require("../constants.js");
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -74,11 +73,10 @@ module.exports = {
         bsc: {
           url: "https://bsc-dataseed.binance.org/",
           chainId: 56,
-          gasPrice: 5000000000,
+          gasPrice: 10000000000,
           gas: 15000000,
-          accounts: [secret.privateKeyMainnet, secret.tester],
+          accounts: [secret.privateKeyMainnet],
           explorer: 'https://bscscan.com/',
-          constants: constants.BSC
         },
         ftmmainnet: {
             // url: "https://rpcapi.fantom.network/",

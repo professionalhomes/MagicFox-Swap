@@ -189,21 +189,21 @@ describe("Presale", function() {
         expect(NFT_SHROOM_1).to.be.above(0);
         expect(NFT_SHROOM_2).to.be.above(0);
 
-        const balanceVeFox1 = await VE_FOX.balanceOfNFT(NFT_FOX_1);
-        const balanceVeFox2 = await VE_FOX.balanceOfNFT(NFT_FOX_2);
-        const balanceVeShroom1 = await VE_SHROOM.balanceOfNFT(NFT_SHROOM_1);
-        const balanceVeShroom2 = await VE_SHROOM.balanceOfNFT(NFT_SHROOM_2);
+        const balanceVeFox1 = (await VE_FOX.locked(NFT_FOX_1)).amount;
+        const balanceVeFox2 = (await VE_FOX.locked(NFT_FOX_2)).amount;
+        const balanceVeShroom1 = (await VE_SHROOM.locked(NFT_SHROOM_1)).amount;
+        const balanceVeShroom2 = (await VE_SHROOM.locked(NFT_SHROOM_2)).amount;
 
         expect(balanceVeFox1).to.be.above(0);
         expect(balanceVeFox2).to.be.above(0);
         expect(balanceVeShroom1).to.be.above(0);
         expect(balanceVeShroom2).to.be.above(0);
-        //expect(balanceVeFox1).to.equal(expected1.veFoxAmt);
-        //expect(balanceVeFox2).to.equal(expected2.veFoxAmt);
-        //expect(balanceVeShroom1).to.equal(expected1.veShroom);
-        //expect(balanceVeShroom2).to.equal(expected2.veShroom);
-        expect(balanceVeFox1.mul(2)).to.equal(balanceVeFox2);
-        expect(balanceVeShroom1.mul(2)).to.equal(balanceVeShroom2);
+        expect(balanceVeFox1).to.equal(expected1.veFoxAmt);
+        expect(balanceVeFox2).to.equal(expected2.veFoxAmt);
+        expect(balanceVeShroom1).to.equal(expected1.veShroomAmt);
+        expect(balanceVeShroom2).to.equal(expected2.veShroomAmt);
+        expect(balanceVeFox1.mul(2)).to.be.within(balanceVeFox2.sub(1), balanceVeFox2.add(1));
+        expect(balanceVeShroom1.mul(2)).to.be.within(balanceVeShroom2.sub(1), balanceVeShroom2.add(1));
 
         // Withdrawals not possible until unlock
         await expect(VE_FOX.connect(investor1).withdraw(NFT_FOX_1)).to.be.revertedWith("The lock didn't expire");

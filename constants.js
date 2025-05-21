@@ -20,6 +20,12 @@ module.exports = {
     veArt: '0xC40c59364CB5CA8540f1EB402F4350FfCFB8C0b1', 
     veToken: '0xfB7c10D38acbda7DfB464f3781725ffd701B00Ec', 
 
+    /* presale */
+    presale: '0x59433FF533bcEf95b2b543b13fa31Ee056E0469a', 
+    treasury: '0x1bb1C670dC4317751a39EDa11Dc50E1231583306', 
+    shroom: '0x827D4BE081b7bB2a1e3338d56F4197f31DfD6250', 
+    veShroom: '0xD588e41f409B0062647EaBB6cC09e35D6d93AC70', 
+
     /* dao */
     bribeFactory: '0x9C1E5171987E3e11d2Bc5C1f39EA49573b9e0150', 
     gaugeFactory: '0xE20e960743A8D5aeB7f9Af695797A0881bf8c9FD', 

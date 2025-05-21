@@ -182,7 +182,7 @@ contract VoterV2_1 is OwnableUpgradeable, ReentrancyGuardUpgradeable {
             address[] memory _gauges, 
             uint256[] memory _amounts
         ) = abi.decode(_payload, (uint256, uint256, address[], uint256[]));
-        
+
         // Update active period if needed
         if (activePeriod > active_period) {
             active_period = activePeriod;

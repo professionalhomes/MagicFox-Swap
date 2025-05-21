@@ -70,6 +70,8 @@ describe("Gauge", function() {
     LZ_RECEIVER = await LZReceiverContract.deploy(VOTER.address, lzEndpoint.address);
     await LZ_RECEIVER.deployed();
 
+    await VOTER.setLzReceiver(LZ_RECEIVER.address);
+
     await BRIBE_F.setVoter(VOTER.address);
 
     await VE.setVoter(VOTER.address);

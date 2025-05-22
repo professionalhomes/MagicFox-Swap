@@ -72,7 +72,7 @@ module.exports = {
         bsc: {
           url: "https://bsc-dataseed.binance.org/",
           chainId: 56,
-          gasPrice: 5000000000,
+          gasPrice: 3000000000,
           gas: 15000000,
           accounts: [secret.privateKeyMainnet, secret.tester],
           explorer: 'https://bscscan.com/',

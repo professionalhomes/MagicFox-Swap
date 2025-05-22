@@ -26,8 +26,11 @@ module.exports = {
     shroom: '0x827D4BE081b7bB2a1e3338d56F4197f31DfD6250', 
     veShroom: '0xD588e41f409B0062647EaBB6cC09e35D6d93AC70', 
 
-    /* dao */
+    /* chainlink */
     chainlinkEpochController: '0xd77903eD23A32447784BbCE01E7c067219785F78',
+    chainlinkWeeklyEmissionBridge: '0xff26C390EAF5F0aC56ea1484322d7138a4b351Cd',
+
+    /* dao */
     bribeFactory: '0x9C1E5171987E3e11d2Bc5C1f39EA49573b9e0150', 
     gaugeFactory: '0xE20e960743A8D5aeB7f9Af695797A0881bf8c9FD', 
     voter: '0x03D8b7D195b98D1526f149ff99527875fD18E4C6', // !!!! VERIFY IN CODE HARD-CODED LZ ENDPOINT ADDRESS !!!!

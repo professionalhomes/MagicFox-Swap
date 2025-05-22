@@ -45,8 +45,8 @@ module.exports = {
     lzEndpoint: '0x3c2269811836af69497E5F486A85D7316753cf62',
 
     /* UpgradableContracts admin */
-    timelocker: '',
-    proxyAdmin: ''
+    timelocker: '0x5d0d83EF1C1f8217cbD0D3D0802E47B8Bcd72207',
+    proxyAdmin: '0x86E00171EA53d56CCB1C2e62006Bb4e0F8a1f83D' // still need to transfer ownership from deployer to timelocker
   },
 
   ARBITRUM: {
@@ -81,7 +81,7 @@ module.exports = {
     lzEndpoint: '0x3c2269811836af69497E5F486A85D7316753cf62',
 
     /* UpgradableContracts admin */
-    timelocker: '',
-    proxyAdmin: ''
+    timelocker: '0x5d0d83EF1C1f8217cbD0D3D0802E47B8Bcd72207',
+    proxyAdmin: '0x4bA2d7200f50A53Be0d6572e5C9df53BB53eA6C6' // still need to transfer ownership from deployer to timelocker
   }
 };

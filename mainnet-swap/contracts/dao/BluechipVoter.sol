@@ -376,6 +376,9 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
 
             // We also need to send tokens to ProxyOFT contract on main chain
             IERC20(base).transfer(proxyOFT, _totalClaimable);
+        } else {
+            // Return lzgas to sender
+            payable(msg.sender).transfer(msg.value);
         }
     }
 

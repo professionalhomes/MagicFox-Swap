@@ -62,6 +62,6 @@ contract EpochController is AutomationCompatibleInterface, OwnableUpgradeable  {
         minter = _minter;
     }
 
-
+    receive() external payable {}
 
 }

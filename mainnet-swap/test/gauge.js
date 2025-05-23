@@ -139,12 +139,12 @@ describe("Gauge", function() {
       await VOTER.connect(investor1).createGauge(testTokens[1].address, 0);
   });
 
-  // it("Gauges can not be duplicated", async function() {
-  //     await VOTER.createGauge(testTokens[0].address, 0);
-  //     await VOTER.createGauge(testTokens[1].address, 0);
-  //     await expect(VOTER.createGauge(testTokens[0].address, 0)).to.be.reverted;
-  //     await expect(VOTER.createGauge(testTokens[1].address, 0)).to.be.reverted;
-  // });
+  it("Gauges can not be duplicated", async function() {
+      await VOTER.createGauge(testTokens[0].address, 0);
+      await VOTER.createGauge(testTokens[1].address, 0);
+      await expect(VOTER.createGauge(testTokens[0].address, 0)).to.be.reverted;
+      await expect(VOTER.createGauge(testTokens[1].address, 0)).to.be.reverted;
+  });
 
   it("Test 3 ePoch flow", async function() {
     // Create pairs
@@ -168,10 +168,10 @@ describe("Gauge", function() {
     await VOTER.createGauge(stablePair.address, 0);
     await VOTER.createGauge(volatilePair.address, 0);
 
-    const gauge0_address = await VOTER.gaugeList(0);
-    const gauge1_address = await VOTER.gaugeList(1);
-    const gauge2_address = await VOTER.gaugeList(2);
-    const gauge3_address = await VOTER.gaugeList(3);
+    const gauge0_address = await VOTER.gauges(testTokens[0].address);
+    const gauge1_address = await VOTER.gauges(testTokens[1].address);
+    const gauge2_address = await VOTER.gauges(stablePair.address);
+    const gauge3_address = await VOTER.gauges(volatilePair.address);
 
     const gaugeContract = await ethers.getContractFactory("GaugeV2");
     const gauge0 = await gaugeContract.attach(gauge0_address);
@@ -199,9 +199,9 @@ describe("Gauge", function() {
 
     await VOTER.connect(investor1).vote(
         NFT1,
-        [gauge0_address, gauge1_address, gauge2_address, gauge3_address],
+        [testTokens[0].address, testTokens[1].address, stablePair.address, volatilePair.address],
         [100, 100, 100, 100]);
-    await VOTER.connect(investor2).vote(NFT2, [gauge1_address, gauge2_address], [1000, 1000]);
+    await VOTER.connect(investor2).vote(NFT2, [testTokens[1].address, stablePair.address], [1000, 1000]);
 
     // deposit into gauges
     await testTokens[0].connect(investor1).approve(gauge0.address, ethers.constants.MaxUint256);
@@ -320,11 +320,11 @@ describe("Gauge", function() {
 
   it("NFT can not be transferred after voting without resetting", async function() {
     await VOTER.createGauge(testTokens[0].address, 0);
-    const gauge0_address = await VOTER.gaugeList(0);
+    const gauge0_address = await VOTER.gauges(testTokens[0].address);
     const gauge0_bribes = await VOTER.external_bribes(gauge0_address);
 
     const NFT = await VE.tokenOfOwnerByIndex(investor1.address, 0);
-    await VOTER.connect(investor1).vote(NFT, [gauge0_address], [1000]);
+    await VOTER.connect(investor1).vote(NFT, [testTokens[0].address], [1000]);
 
     // Can not transfer after voting
     await expect(VE.connect(investor1).transferFrom(investor1.address, investor2.address, NFT)).to.be.revertedWith("attached");
@@ -347,8 +347,7 @@ describe("Gauge", function() {
 
     await VOTER.createGauge(token.address, 0);
     const gaugeContract = await ethers.getContractFactory("GaugeV2");
-    const gauge0_address = await VOTER.gaugeList(0);
-    const gauge = await gaugeContract.attach(gauge0_address);
+    const gauge = await gaugeContract.attach(await VOTER.gauges(token.address));
     const gauge_bribes = await VOTER.external_bribes(gauge.address);
 
     const bribes_contract = await hre.ethers.getContractAt('Bribe', gauge_bribes, owner);
@@ -357,7 +356,7 @@ describe("Gauge", function() {
     await token.connect(investor1).approve(gauge.address, ethers.constants.MaxUint256);
 
     await gauge.connect(investor1).depositAll(NFT);
-    await VOTER.connect(investor1).vote(NFT, [gauge0_address], [1000]);
+    await VOTER.connect(investor1).vote(NFT, [token.address], [1000]);
 
     let new_bribes = await BRIBE_TOKEN.balanceOf(investor1.address);
     let old_bribes, notified_amount;

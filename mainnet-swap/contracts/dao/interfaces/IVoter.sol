@@ -4,7 +4,6 @@ pragma solidity 0.8.13;
 interface IVoter {
     function _ve() external view returns (address);
     function governor() external view returns (address);
-    // function gauges(address _pair) external view returns (address);
     function factory() external view returns (address);
     function minter() external view returns(address);
     function emergencyCouncil() external view returns (address);

@@ -49,7 +49,7 @@ contract VoterV2_1 is IVoter, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     mapping(address => address) public poolForGauge; // gauge => pool
     mapping(address => address) public internal_bribes; // gauge => internal bribe (only fees)
     mapping(address => address) public external_bribes; // gauge => external bribe (real bribes)
-    mapping(address => uint256) public weights; // pool => weight
+    mapping(address => uint256) public weights; // gauge => weight
     mapping(uint => mapping(address => uint256)) public votes; // nft => gauge => votes
     mapping(uint => address[]) public gaugeVote; // nft => gauges
     mapping(uint => uint) public usedWeights;  // nft => total voting weight of user

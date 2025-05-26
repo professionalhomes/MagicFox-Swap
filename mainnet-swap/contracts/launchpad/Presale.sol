@@ -50,8 +50,8 @@ contract Presale is Ownable, ReentrancyGuard {
   uint256 public totalAllocationFOX; // takes into account discounts
   uint256 public totalAllocationSHROOM; // takes into account discounts
 
-  uint256 public constant MAX_FOX_TO_DISTRIBUTE = 1_558_822 ether; // max FOX amount to distribute during the sale
-  uint256 public constant MAX_SHROOM_TO_DISTRIBUTE = 3_116_000 ether; // max SHROOM amount to distribute during the sale
+  uint256 public constant MAX_FOX_TO_DISTRIBUTE = 583_105 ether; // max FOX amount to distribute during the sale
+  uint256 public constant MAX_SHROOM_TO_DISTRIBUTE = 3_104_848 ether; // max SHROOM amount to distribute during the sale
 
   uint256 public constant VE_TOKEN_SHARE = 40; // ~ 40% of FOX/SHROOM bought is returned as veFOX/veSHROOM
 

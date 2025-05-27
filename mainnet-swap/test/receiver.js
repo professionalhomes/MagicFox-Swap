@@ -2,7 +2,7 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe.only("Receiver", function () {
+describe("Receiver", function () {
   let owner, tokenOwner, investor, deposit;
   let pairFactory, router, WETH, tokenA, tokenB, tokenC;
   let receiver;
@@ -38,8 +38,12 @@ describe.only("Receiver", function () {
     await router.deployed();
 
     // Router
-    const receiverContract = await ethers.getContractFactory("Receiver");
-    receiver = await receiverContract.deploy(router.address, deposit.address);
+    const receiverContract = await ethers.getContractFactory("FeeCollector");
+
+    receiver = await upgrades.deployProxy(receiverContract, [
+      router.address,
+      deposit.address,
+    ]);
     await receiver.deployed();
 
     // Pairs

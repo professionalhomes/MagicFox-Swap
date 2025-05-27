@@ -10,11 +10,12 @@ module.exports = {
     veArt: '0xd0f4f8b8cEd19E82b8461ada452fF9B116E5F717', 
     veToken: '0xb241D311f1114ECb6E210c40b0F2040AC8cD485e', 
 
-    /* presale */
-    presale: '', 
-    treasury: '', 
-    shroom: '', 
-    veShroom: '', 
+    /* fairlaunch */
+    fairlaunch: '0xa589e8874fF691bd6B9D19b545722791CE532fFD', 
+    fairlaunchZap: '0x8B0D70d8C3ef0B91F6f33d1715a3790cC1b6E3B1', 
+    treasury: '0x16a22488426742CDe589BC1D299D55BfaF28093d', 
+    shroom: '0x827D4BE081b7bB2a1e3338d56F4197f31DfD6250', 
+    veShroom: '0xD588e41f409B0062647EaBB6cC09e35D6d93AC70', 
 
     /* chainlink */
     chainlinkEpochController: '0x18aC685D8D40eCBA614dcae0EBc35313DFD2eD84',

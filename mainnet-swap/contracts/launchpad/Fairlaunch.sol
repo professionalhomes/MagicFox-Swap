@@ -14,10 +14,11 @@ interface IVotingEscrow {
 
 interface IZap {
   function convert(
-      address inputToken, 
-      uint256 inputAmount, 
-      address[] calldata path
-    ) external payable returns (uint256);
+    address buyer,
+    address inputToken, 
+    uint256 inputAmount, 
+    address[] calldata path
+  ) external payable returns (uint256);
 }
 
 contract Fairlaunch is Ownable, ReentrancyGuard {
@@ -210,7 +211,7 @@ contract Fairlaunch is Ownable, ReentrancyGuard {
     address referralAddress
   ) external payable isSaleActive nonReentrant {
     require(
-        path[0] == address(inputToken),
+        inputToken == address(0) || path[0] == inputToken,
         "wrong path path[0]"
     );
     require(
@@ -219,6 +220,7 @@ contract Fairlaunch is Ownable, ReentrancyGuard {
     );
 
     uint256 amount = zap.convert{value: msg.value}(
+      msg.sender,
       inputToken,
       inputAmount,
       path

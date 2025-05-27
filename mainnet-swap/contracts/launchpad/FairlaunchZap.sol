@@ -26,10 +26,18 @@ interface IRouter {
 }
 
 contract FairlaunchZap is Ownable {
+  using SafeMath for uint256;
+  using SafeERC20 for IERC20;
 
   mapping(address => bool) public whitelistedTokens;
   IRouter public constant router = IRouter(0x10ED43C718714eb63d5aA57B78B54704E256024E);
   address public fairlaunch;
+
+  // constructor (address[] calldata _tokens) {
+  //   for (uint i = 0; i < _tokens.length; i++) {
+  //     whitelistedTokens[_tokens[i]] = true;
+  //   }
+  // }
 
   function whitelistTokens(address[] calldata _tokens, bool whitelist) external onlyOwner {
     for (uint i = 0; i < _tokens.length; i++) {
@@ -38,6 +46,7 @@ contract FairlaunchZap is Ownable {
   }
 
   function convert(
+    address buyer,
     address inputToken, 
     uint256 inputAmount, 
     address[] calldata path
@@ -49,6 +58,13 @@ contract FairlaunchZap is Ownable {
     );
 
     if (inputToken != address(0)) {
+      IERC20(inputToken).safeTransferFrom(
+        buyer, 
+        address(this), 
+        inputAmount
+      );
+
+      IERC20(inputToken).approve(address(router), inputAmount);
       router.swapExactTokensForTokens(
           inputAmount,
           0,

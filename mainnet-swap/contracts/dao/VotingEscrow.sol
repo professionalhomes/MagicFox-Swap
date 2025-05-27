@@ -68,6 +68,7 @@ contract VotingEscrow is IERC721, IERC721Metadata, IVotes, ILayerZeroReceiver {
 
     address public immutable token;
     address public voter;
+    address public bluechipVoter;
     address public team;
     address public artProxy;
 
@@ -93,6 +94,7 @@ contract VotingEscrow is IERC721, IERC721Metadata, IVotes, ILayerZeroReceiver {
     constructor(address token_addr, address art_proxy) {
         token = token_addr;
         voter = msg.sender;
+        bluechipVoter = msg.sender;
         team = msg.sender;
         artProxy = art_proxy;
 
@@ -1039,9 +1041,10 @@ contract VotingEscrow is IERC721, IERC721Metadata, IVotes, ILayerZeroReceiver {
     mapping(uint => uint) public attachments;
     mapping(uint => bool) public voted;
 
-    function setVoter(address _voter) external {
+    function setVoter(address _voter, address _bluechipVoter) external {
         require(msg.sender == team);
         voter = _voter;
+        bluechipVoter = _bluechipVoter;
     }
 
     function voting(uint _tokenId) external {
@@ -1055,12 +1058,12 @@ contract VotingEscrow is IERC721, IERC721Metadata, IVotes, ILayerZeroReceiver {
     }
 
     function attach(uint _tokenId) external {
-        require(msg.sender == voter);
+        require(msg.sender == voter || msg.sender == bluechipVoter);
         attachments[_tokenId] = attachments[_tokenId] + 1;
     }
 
     function detach(uint _tokenId) external {
-        require(msg.sender == voter);
+        require(msg.sender == voter || msg.sender == bluechipVoter);
         attachments[_tokenId] = attachments[_tokenId] - 1;
     }
 

@@ -96,7 +96,7 @@ describe("Gauge", function() {
     MINTER = await upgrades.deployProxy(MINTERContract, [VOTER.address, BLUECHIP_VOTER.address, VE.address, REWARD_DIST.address]);
     await MINTER.deployed();
 
-    await VE.setVoter(VOTER.address);
+    await VE.setVoter(VOTER.address, BLUECHIP_VOTER.address);
     await TOKEN.setMinter(MINTER.address);
     await VOTER.setMinter(MINTER.address);
     await BLUECHIP_VOTER.setMinter(MINTER.address);
@@ -124,7 +124,7 @@ describe("Gauge", function() {
     // Add one gauge to make it work -- prevent division by zero totalWeight
     await BLUECHIP_VOTER.createGauge(testTokens[0].address, 0);
     await BLUECHIP_VOTER.connect(owner).vote(
-      [testTokens[0].address],
+      [await BLUECHIP_VOTER.gaugeList(0)],
       [100]
     );
   });

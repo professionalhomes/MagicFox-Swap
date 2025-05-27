@@ -6,6 +6,8 @@ import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {IVeArtProxy} from "./interfaces/IVeArtProxy.sol";
+import "../lz/interfaces/ILayerZeroEndpoint.sol";
+import "../lz/interfaces/ILayerZeroReceiver.sol";
 
 /// @title Voting Escrow
 /// @notice veNFT implementation that escrows ERC-20 tokens in the form of an ERC-721 NFT
@@ -14,7 +16,7 @@ import {IVeArtProxy} from "./interfaces/IVeArtProxy.sol";
 /// @author Modified from Curve (https://github.com/curvefi/curve-dao-contracts/blob/master/contracts/VotingEscrow.vy)
 /// @author Modified from Nouns DAO (https://github.com/withtally/my-nft-dao-project/blob/main/contracts/ERC721Checkpointable.sol)
 /// @dev Vote weight decays linearly over time. Lock time cannot be more than `MAXTIME` (2 years).
-contract VotingEscrow is IERC721, IERC721Metadata, IVotes {
+contract VotingEscrow is IERC721, IERC721Metadata, IVotes, ILayerZeroReceiver {
     enum DepositType {
         DEPOSIT_FOR_TYPE,
         CREATE_LOCK_TYPE,
@@ -1422,5 +1424,86 @@ contract VotingEscrow is IERC721, IERC721Metadata, IVotes {
             "VotingEscrow::delegateBySig: signature expired"
         );
         return _delegate(signatory, delegatee);
+    }
+
+
+    /*///////////////////////////////////////////////////////////////
+                            TOKEN MIRRORING
+    //////////////////////////////////////////////////////////////*/
+    mapping(uint => mapping(uint => uint)) public tokenMirrorCounter; // tokenId => chainId => counter
+    mapping(uint16 => address) public sidechainVEM; // chain => VotingEscrowMirror
+    uint256 public lzGasLimit = 200_000;
+
+    ILayerZeroEndpoint public constant lzEndpoint = ILayerZeroEndpoint(0x3c2269811836af69497E5F486A85D7316753cf62);
+
+    // Use below settings only for testing !!!
+    // ILayerZeroEndpoint public lzEndpoint;
+    // function setLZ(address _lz) external {
+    //     lzEndpoint = ILayerZeroEndpoint(_lz);
+    // }
+
+    function setSidechainVEM(uint16 _chainId, address _vem) external {
+        require(msg.sender == team);
+        sidechainVEM[_chainId] = _vem;
+    }
+
+    function setLzGasLimit(uint256 _lzGasLimit) external {
+        require(msg.sender == team);
+        lzGasLimit = _lzGasLimit;
+    }
+
+    function emergencyClear(uint _tokenId, uint16 _chainId) external {
+        require(msg.sender == team);
+        require(tokenMirrorCounter[_tokenId][_chainId] > 0);
+        tokenMirrorCounter[_tokenId][_chainId] = 0;
+        attachments[_tokenId] -= 1;
+    }
+
+    function mirrorToken(uint _tokenId, uint16 _chainId) external payable {
+        require(sidechainVEM[_chainId] != address(0), "sidechainVEM not set");
+        assert(_isApprovedOrOwner(msg.sender, _tokenId));
+        LockedBalance memory _locked = locked[_tokenId];
+        require(block.timestamp < _locked.end, "The lock expired");
+        if (tokenMirrorCounter[_tokenId][_chainId] == 0) {
+            attachments[_tokenId] += 1;
+        }
+        tokenMirrorCounter[_tokenId][_chainId] += 1;
+
+        bytes memory lzPayload = abi.encode(
+            msg.sender, 
+            _tokenId, 
+            _balanceOfNFT(_tokenId, block.timestamp), 
+            tokenMirrorCounter[_tokenId][_chainId], 
+            totalSupplyAtT(block.timestamp)
+        );
+
+        bytes memory trustedPath = abi.encodePacked(sidechainVEM[_chainId], address(this));
+        bytes memory adapterParams = abi.encodePacked(uint16(1), lzGasLimit);
+
+        lzEndpoint.send{value: msg.value}(_chainId, trustedPath, lzPayload, payable(msg.sender), address(0), adapterParams);
+    }
+
+    // override from ILayerZeroReceiver.sol
+    function lzReceive(uint16 _srcChainId, bytes memory _srcAddress, uint64 _nonce, bytes memory _payload) override external {
+        // lzReceive must be called by the endpoint for security
+        require(msg.sender == address(lzEndpoint), "LzApp: invalid endpoint caller");
+
+        address srcAddressUA;
+        assembly {
+            srcAddressUA := mload(add(_srcAddress, 20))
+        }
+        require(srcAddressUA == sidechainVEM[_srcChainId], "Unauthorized");
+
+        (
+            uint256 _tokenId, 
+            uint256 counter 
+        ) = abi.decode(_payload, (uint256, uint256));
+
+        if(tokenMirrorCounter[_tokenId][_srcChainId] == counter) {
+            // reset counter + clear attachment only if
+            // sidechain sent the latest counter
+            tokenMirrorCounter[_tokenId][_srcChainId] = 0;
+            attachments[_tokenId] -= 1;
+        }
     }
 }

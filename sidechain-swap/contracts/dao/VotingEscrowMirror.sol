@@ -38,6 +38,7 @@ contract VotingEscrowMirror is OwnableUpgradeable, ILayerZeroReceiver {
         __Ownable_init();
         token = _token_addr;
         voter = msg.sender;
+        bluechipVoter = msg.sender;
         team = msg.sender;
         mainchainAddress = _mainchainAddress;
         lzEndpoint = ILayerZeroEndpoint(_lzEndpoint);

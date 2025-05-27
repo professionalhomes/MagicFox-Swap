@@ -94,6 +94,7 @@ contract VotingEscrow is IERC721, IERC721Metadata, IVotes, ILayerZeroReceiver {
     constructor(address token_addr, address art_proxy) {
         token = token_addr;
         voter = msg.sender;
+        bluechipVoter = msg.sender;
         team = msg.sender;
         artProxy = art_proxy;
 

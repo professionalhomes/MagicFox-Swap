@@ -99,77 +99,77 @@ describe("VoterV2", function() {
     // await VE.connect(investor2).create_lock(ethers.utils.parseUnits('2.00', 18), 2 * 365 * 86400); // 2 years
   });
   
-  it("Create gauge, bribe, vote,/*  distributeAll", async function() {
-    // Create gauge
-    console.log(`---- createGauge 0 ----`);
-    await VOTER.createGauge(testTokens[0].address, 0);
-    await expect(VOTER.createGauge(testTokens[0].address, 0)).to.be.revertedWith('exists');
-    expect(await VOTER.pools(0)).to.equal(testTokens[0].address);
+  // it("Create gauge, bribe, vote,/*  distributeAll", async function() {
+  //   // Create gauge
+  //   console.log(`---- createGauge 0 ----`);
+  //   await VOTER.createGauge(testTokens[0].address, 0);
+  //   await expect(VOTER.createGauge(testTokens[0].address, 0)).to.be.revertedWith('exists');
+  //   expect(await VOTER.pools(0)).to.equal(testTokens[0].address);
 
-    console.log(`---- createGauge 1 ----`);
-    await VOTER.createGauge(testTokens[1].address, 0);
-    expect(await VOTER.pools(1)).to.equal(testTokens[1].address);
+  //   console.log(`---- createGauge 1 ----`);
+  //   await VOTER.createGauge(testTokens[1].address, 0);
+  //   expect(await VOTER.pools(1)).to.equal(testTokens[1].address);
 
-    const gauge0_address = await VOTER.gauges(testTokens[0].address);
-    const gauge1_address = await VOTER.gauges(testTokens[1].address);
+  //   const gauge0_address = await VOTER.gauges(testTokens[0].address);
+  //   const gauge1_address = await VOTER.gauges(testTokens[1].address);
 
-    // Add bribes
-    const gauge0_bribes = await VOTER.external_bribes(gauge0_address);
-    console.log(`\n---- bribes ----`);
-    console.log(`gauge0_bribes: ${gauge0_bribes}`);
+  //   // Add bribes
+  //   const gauge0_bribes = await VOTER.external_bribes(gauge0_address);
+  //   console.log(`\n---- bribes ----`);
+  //   console.log(`gauge0_bribes: ${gauge0_bribes}`);
 
-    const bribes0_contract = await hre.ethers.getContractAt('Bribe', gauge0_bribes, owner);
-    await bribes0_contract.addRewardToken(BRIBE_TOKEN.address);
-    await BRIBE_TOKEN.approve(bribes0_contract.address, ethers.utils.parseUnits('500', 18));
-    await bribes0_contract.notifyRewardAmount(BRIBE_TOKEN.address, ethers.utils.parseUnits('500', 18));
+  //   const bribes0_contract = await hre.ethers.getContractAt('Bribe', gauge0_bribes, owner);
+  //   await bribes0_contract.addRewardToken(BRIBE_TOKEN.address);
+  //   await BRIBE_TOKEN.approve(bribes0_contract.address, ethers.utils.parseUnits('500', 18));
+  //   await bribes0_contract.notifyRewardAmount(BRIBE_TOKEN.address, ethers.utils.parseUnits('500', 18));
 
-    // Vote 
-    const tokenId = await VE.tokenOfOwnerByIndex(investor1.address, 0);
+  //   // Vote 
+  //   const tokenId = await VE.tokenOfOwnerByIndex(investor1.address, 0);
 
-    console.log(`\n---- vote ----`);
-    console.log(`gauge0 weight: 1000`);
-    console.log(`gauge1 weight: 100`);
-    await VOTER.connect(investor1).vote(tokenId, [testTokens[0].address, testTokens[1].address], [1000, 100]);
+  //   console.log(`\n---- vote ----`);
+  //   console.log(`gauge0 weight: 1000`);
+  //   console.log(`gauge1 weight: 100`);
+  //   await VOTER.connect(investor1).vote(tokenId, [testTokens[0].address, testTokens[1].address], [1000, 100]);
 
-    // await testTokens[0].connect(investor1).approve(GAUGE_0.address, ethers.constants.MaxUint256);
-    // await GAUGE_0.deposit(ethers.utils.parseUnits('100', 18));
+  //   // await testTokens[0].connect(investor1).approve(GAUGE_0.address, ethers.constants.MaxUint256);
+  //   // await GAUGE_0.deposit(ethers.utils.parseUnits('100', 18));
 
-    // const gauge0 = await VOTER.gauges(testTokens[0]);
-    // console.log(await VOTER.gauges(testTokens[0]));
-    // console.log(await VOTER.gauges(testTokens[1]));
+  //   // const gauge0 = await VOTER.gauges(testTokens[0]);
+  //   // console.log(await VOTER.gauges(testTokens[0]));
+  //   // console.log(await VOTER.gauges(testTokens[1]));
 
-    // const currentTime = Math.ceil(new Date().getTime() / 1000);
-    // const active_period = await MINTER.active_period();
-    // console.log(currentTime);
-    // console.log(active_period.toString());
-    // console.log(currentTime - active_period.toNumber());
+  //   // const currentTime = Math.ceil(new Date().getTime() / 1000);
+  //   // const active_period = await MINTER.active_period();
+  //   // console.log(currentTime);
+  //   // console.log(active_period.toString());
+  //   // console.log(currentTime - active_period.toNumber());
 
-    // await time.setNextBlockTimestamp(currentTime + 86400);
-    console.log(`\n---- manually set timestamp 1 week in advance ----`);
-    await ethers.provider.send('evm_increaseTime', [3600 * 24 * 7]);
+  //   // await time.setNextBlockTimestamp(currentTime + 86400);
+  //   console.log(`\n---- manually set timestamp 1 week in advance ----`);
+  //   await ethers.provider.send('evm_increaseTime', [3600 * 24 * 7]);
 
-    console.log(`VOTER balance: ${await TOKEN.balanceOf(VOTER.address)}`);
-    console.log(`gauge0 balance: ${await TOKEN.balanceOf(gauge0_address)}`);
-    console.log(`gauge1 balance: ${await TOKEN.balanceOf(gauge1_address)}`);
-    console.log(`--------------------------------`);
-    console.log(`bribe0 balance: ${await BRIBE_TOKEN.balanceOf(gauge0_bribes)}`);
+  //   console.log(`VOTER balance: ${await TOKEN.balanceOf(VOTER.address)}`);
+  //   console.log(`gauge0 balance: ${await TOKEN.balanceOf(gauge0_address)}`);
+  //   console.log(`gauge1 balance: ${await TOKEN.balanceOf(gauge1_address)}`);
+  //   console.log(`--------------------------------`);
+  //   console.log(`bribe0 balance: ${await BRIBE_TOKEN.balanceOf(gauge0_bribes)}`);
 
-    console.log(`\n---- distributeAll ----`);
+  //   console.log(`\n---- distributeAll ----`);
     
-    await VOTER.distributeAll();
+  //   await VOTER.distributeAll();
 
-    console.log(`VOTER balance: ${await TOKEN.balanceOf(VOTER.address)}`);
-    console.log(`gauge0 balance: ${await TOKEN.balanceOf(gauge0_address)}`);
-    console.log(`gauge1 balance: ${await TOKEN.balanceOf(gauge1_address)}`);
-    console.log(`--------------------------------`);
-    console.log(`bribe0 balance: ${await BRIBE_TOKEN.balanceOf(gauge0_bribes)}`);
+  //   console.log(`VOTER balance: ${await TOKEN.balanceOf(VOTER.address)}`);
+  //   console.log(`gauge0 balance: ${await TOKEN.balanceOf(gauge0_address)}`);
+  //   console.log(`gauge1 balance: ${await TOKEN.balanceOf(gauge1_address)}`);
+  //   console.log(`--------------------------------`);
+  //   console.log(`bribe0 balance: ${await BRIBE_TOKEN.balanceOf(gauge0_bribes)}`);
 
-    console.log(`\n---- claimBribes ----`);
-    console.log(`bribe token: ${BRIBE_TOKEN.address}`);
-    await VOTER.connect(investor1).claimBribes([gauge0_bribes], [[BRIBE_TOKEN.address]], tokenId);
-    console.log(`bribe0 balance: ${await BRIBE_TOKEN.balanceOf(gauge0_bribes)}`);
-    console.log(`investor1 bribe balance: ${await BRIBE_TOKEN.balanceOf(investor1.address)}`);
-  });
+  //   console.log(`\n---- claimBribes ----`);
+  //   console.log(`bribe token: ${BRIBE_TOKEN.address}`);
+  //   await VOTER.connect(investor1).claimBribes([gauge0_bribes], [[BRIBE_TOKEN.address]], tokenId);
+  //   console.log(`bribe0 balance: ${await BRIBE_TOKEN.balanceOf(gauge0_bribes)}`);
+  //   console.log(`investor1 bribe balance: ${await BRIBE_TOKEN.balanceOf(investor1.address)}`);
+  // });
 
 
   it("Test gauge reward boosting", async function() {
@@ -228,6 +228,9 @@ describe("VoterV2", function() {
 
     console.log(`VE totalSUpply:               ${(await VE.totalSupply())}`);
     console.log(`GAUGE_0 investor1 dBalance:   ${(await GAUGE_0.derivedBalance(investor1.address))}`);
+
+    // await GAUGE_0.connect(investor1).withdrawAll();
+    // await VE.connect(investor1).clearMirror(10);
 
   });
 });

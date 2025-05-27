@@ -34,7 +34,7 @@ contract VoterV2_1 is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     address public fees_collector;
     address public lz_receiver;
 
-    address[] public pools; // all pools viable for incentives
+    address[] public gaugeList; // all gauges viable for incentives
     mapping(address => address) public gauges; // pool => gauge
     mapping(address => address) public mainChainGauges; // mainGauge => sideGauge
     mapping(address => uint) public gaugesDistributionTimestmap;
@@ -88,7 +88,6 @@ contract VoterV2_1 is OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     function createGauge(address _pool, address _mainGauge) external returns (address) {
         require(msg.sender == governor, "Only governor");
-        require(gauges[_pool] == address(0x0), "exists");
         require(mainChainGauges[_mainGauge] == address(0x0), "mainchain gauge exists");
         bool isPair = IPairFactory(factory).isPair(_pool);
         address tokenA;
@@ -102,11 +101,10 @@ contract VoterV2_1 is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         mainChainGauges[_mainGauge] = _gauge;
 
         IERC20(base).approve(_gauge, type(uint).max);
-        gauges[_pool] = _gauge;
         poolForGauge[_gauge] = _pool;
         isGauge[_gauge] = true;
         isAlive[_gauge] = true;
-        pools.push(_pool);
+        gaugeList.push(_gauge);
         emit GaugeCreated(_gauge, msg.sender, fees_collector, _pool);
         return _gauge;
     }
@@ -150,7 +148,7 @@ contract VoterV2_1 is OwnableUpgradeable, ReentrancyGuardUpgradeable {
     }
 
     function length() external view returns (uint) {
-        return pools.length;
+        return gaugeList.length;
     }
 
     function claimRewards(address[] memory _gauges, address[][] memory _tokens) external {
@@ -246,8 +244,6 @@ contract VoterV2_1 is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         require(msg.sender == emergencyCouncil, "not emergency council");
         require(isAlive[_gauge], "gauge already dead");
         isAlive[_gauge] = false;
-        address _pool = poolForGauge[_gauge];
-        gauges[_pool] = address(0);
         poolForGauge[_gauge] = address(0);
         isGauge[_gauge] = false;
         isAlive[_gauge] = false;
@@ -276,7 +272,12 @@ contract VoterV2_1 is OwnableUpgradeable, ReentrancyGuardUpgradeable {
         return address(this);
     }
 
-    function poolsList() external view returns(address[] memory){
-        return pools;
+    function gaugeListExtended() external view returns(address[] memory, address[] memory){
+        address[] memory poolList = new address[](gaugeList.length);
+        for (uint i = 0; i < gaugeList.length; i++) {
+            poolList[i] = poolForGauge[gaugeList[i]];
+        }
+
+        return (gaugeList, poolList);
     }
 }

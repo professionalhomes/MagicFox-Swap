@@ -5,48 +5,56 @@ async function main() {
     const addresses = hre.network.config.constants;
     const deployer = (await hre.ethers.getSigners())[0];
 
-    const ContractF = await hre.ethers.getContractFactory("LZReceiver");
-    const receiver_voter = await ContractF.deploy(
-        addresses.voter, // voter
-        addresses.lzEndpoint, // address _lzEndpoint
-    );
+    // const ContractF = await hre.ethers.getContractFactory("LZReceiver");
+    // const receiver_voter = await ContractF.deploy(
+    //     addresses.voter, // voter
+    //     addresses.lzEndpoint, // address _lzEndpoint
+    // );
 
-    await receiver_voter.deployed();
+    // await receiver_voter.deployed();
 
-    console.log("LZReceiver (voter) deployed to: %saddress/%s", hre.network.config.explorer, receiver_voter.address);
+    // console.log("LZReceiver (voter) deployed to: %saddress/%s", hre.network.config.explorer, receiver_voter.address);
 
-    const receiver_bluechip = await ContractF.deploy(
-        addresses.bluechipVoter, // bluechip voter
-        addresses.lzEndpoint, // address _lzEndpoint
-    );
+    // const receiver_bluechip = await ContractF.deploy(
+    //     addresses.bluechipVoter, // bluechip voter
+    //     addresses.lzEndpoint, // address _lzEndpoint
+    // );
 
-    await receiver_bluechip.deployed();
+    // await receiver_bluechip.deployed();
 
-    console.log("LZReceiver (bluechipVoter) deployed to: %saddress/%s", hre.network.config.explorer, receiver_bluechip.address);
+    // console.log("LZReceiver (bluechipVoter) deployed to: %saddress/%s", hre.network.config.explorer, receiver_bluechip.address);
 
     const VOTER = await hre.ethers.getContractAt('VoterV2_1', addresses.voter, deployer);
     const BLUECHIP_VOTER = await hre.ethers.getContractAt('BluechipVoter', addresses.bluechipVoter, deployer);
     
-    // const receiver_voter = await hre.ethers.getContractAt('LZReceiver', addresses.lzReceiver, deployer);
-    // const receiver_bluechip = await hre.ethers.getContractAt('LZReceiver', addresses.lzReceiverBluechip, deployer);
+    const receiver_voter = await hre.ethers.getContractAt('LZReceiver', addresses.lzReceiver, deployer);
+    const receiver_bluechip = await hre.ethers.getContractAt('LZReceiver', addresses.lzReceiverBluechip, deployer);
 
     let tx;
 
-    tx = await VOTER.setLzReceiver(receiver_voter.address);
-    await tx.wait();
-    console.log("VOTER.setLzReceiver");
+    // tx = await VOTER.setLzReceiver(receiver_voter.address);
+    // await tx.wait();
+    // console.log("VOTER.setLzReceiver");
 
-    tx = await BLUECHIP_VOTER.setLzReceiver(receiver_bluechip.address);
-    await tx.wait();
-    console.log("BLUECHIP_VOTER.setLzReceiver");
+    // tx = await BLUECHIP_VOTER.setLzReceiver(receiver_bluechip.address);
+    // await tx.wait();
+    // console.log("BLUECHIP_VOTER.setLzReceiver");
 
-    tx = await receiver_voter.setTrustedRemoteAddress(constants.BSC.lzChainId, constants.BSC.voter);
-    await tx.wait();
-    console.log("receiver_voter.setTrustedRemoteAddress");
+    // tx = await receiver_voter.setTrustedRemoteAddress(constants.BSC.lzChainId, constants.BSC.voter);
+    // await tx.wait();
+    // console.log("receiver_voter.setTrustedRemoteAddress");
 
-    tx = await receiver_bluechip.setTrustedRemoteAddress(constants.BSC.lzChainId, constants.BSC.bluechipVoter);
+    // tx = await receiver_bluechip.setTrustedRemoteAddress(constants.BSC.lzChainId, constants.BSC.bluechipVoter);
+    // await tx.wait();
+    // console.log("receiver_bluechip.setTrustedRemoteAddress");
+
+    tx = await receiver_voter.setVoter(addresses.voter);
     await tx.wait();
-    console.log("receiver_bluechip.setTrustedRemoteAddress");
+    console.log("receiver_voter.setVoter");
+
+    tx = await receiver_bluechip.setVoter(addresses.bluechipVoter);
+    await tx.wait();
+    console.log("receiver_bluechip.setVoter");
 }
 
 main()

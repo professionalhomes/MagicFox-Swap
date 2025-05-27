@@ -8,7 +8,7 @@ async function main() {
         addresses.minter,
         addresses.voter,
         addresses.bluechipVoter,
-        hre.ethers.utils.parseUnits("1000000"),
+        1000000,
         constants.ARBITRUM.lzChainId,
         hre.ethers.utils.parseUnits("0.006")
     ]);

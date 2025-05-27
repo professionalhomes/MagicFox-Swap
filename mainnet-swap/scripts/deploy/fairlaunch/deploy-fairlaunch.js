@@ -2,7 +2,7 @@ const hre = require("hardhat");
 
 async function main() {
     const addresses = hre.network.config.constants;
-    const ContractF = await hre.ethers.getContractFactory("Presale");
+    const ContractF = await hre.ethers.getContractFactory("Fairlaunch");
     const contr = await ContractF.deploy(
         addresses.token,
         addresses.veToken,

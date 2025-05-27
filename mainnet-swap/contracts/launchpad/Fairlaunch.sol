@@ -12,7 +12,15 @@ interface IVotingEscrow {
   function create_lock_for(uint _value, uint _lock_duration, address _to) external returns (uint);
 }
 
-contract Presale is Ownable, ReentrancyGuard {
+interface IZap {
+  function convert(
+      address inputToken, 
+      uint256 inputAmount, 
+      address[] calldata path
+    ) external payable returns (uint256);
+}
+
+contract Fairlaunch is Ownable, ReentrancyGuard {
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
@@ -56,6 +64,7 @@ contract Presale is Ownable, ReentrancyGuard {
   uint256 public constant VE_TOKEN_SHARE = 40; // ~ 40% of FOX/SHROOM bought is returned as veFOX/veSHROOM
 
   address public immutable treasury; // treasury multisig, will receive raised amount
+  IZap public immutable zap;
 
   constructor(
     IERC20 foxToken, 
@@ -65,10 +74,12 @@ contract Presale is Ownable, ReentrancyGuard {
     IERC20 saleToken, 
     uint256 startTime, 
     uint256 endTime, 
-    address treasury_
+    address treasury_,
+    IZap zap_
   ) {
     require(startTime < endTime, "invalid dates");
     require(treasury_ != address(0), "invalid treasury");
+    require(address(zap_) != address(0), "invalid zap");
 
     FOX = foxToken;
     VE_FOX = veFoxToken;
@@ -78,6 +89,7 @@ contract Presale is Ownable, ReentrancyGuard {
     START_TIME = startTime;
     END_TIME = endTime;
     treasury = treasury_;
+    zap = zap_;
 
     // set max approval for veFOX/veSHROOM locking
     FOX.approve(address(VE_FOX), type(uint256).max);
@@ -187,54 +199,32 @@ contract Presale is Ownable, ReentrancyGuard {
   /****************** EXTERNAL PUBLIC FUNCTIONS  ******************/
   /****************************************************************/
 
-  /**
-   * @dev Purchase an allocation for the sale for a value of "amount" SALE_TOKEN, referred by "referralAddress"
-   */
   function buy(uint256 amount, address referralAddress) external isSaleActive nonReentrant {
-    require(amount > 0, "buy: zero amount");
+    _buy(amount, referralAddress, false);
+  }
 
-    uint256 participationAmount = amount;
-    UserInfo storage user = userInfo[msg.sender];
+  function zapAndBuy(
+    address inputToken, 
+    uint256 inputAmount, 
+    address[] calldata path,
+    address referralAddress
+  ) external payable isSaleActive nonReentrant {
+    require(
+        path[0] == address(inputToken),
+        "wrong path path[0]"
+    );
+    require(
+        path[path.length - 1] == address(SALE_TOKEN),
+        "wrong path path[-1]"
+    );
 
-    // handle user's referral
-    if (user.allocationFOX == 0 && user.ref == address(0) && referralAddress != address(0) && referralAddress != msg.sender) {
-      // If first buy, and does not have any ref already set
-      user.ref = referralAddress;
-    }
-    referralAddress = user.ref;
+    uint256 amount = zap.convert{value: msg.value}(
+      inputToken,
+      inputAmount,
+      path
+    );
 
-    if (referralAddress != address(0)) {
-      UserInfo storage referrer = userInfo[referralAddress];
-
-      // compute and send referrer share
-      uint256 refShareAmount = REFERRAL_SHARE.mul(amount).div(100);
-      SALE_TOKEN.safeTransferFrom(msg.sender, address(this), refShareAmount);
-
-      referrer.refEarnings = referrer.refEarnings.add(refShareAmount);
-      participationAmount = participationAmount.sub(refShareAmount);
-
-      emit NewRefEarning(referralAddress, refShareAmount);
-    }
-
-    // 50% in FOX
-    uint256 allocationFOX = amount.mul(50).div(100);
-    // 50% in SHROOM
-    uint256 allocationSHROOM = amount - allocationFOX;
-
-    // update raised amounts
-    user.contribution = user.contribution.add(amount);
-    totalRaised = totalRaised.add(amount);
-
-    // update allocations
-    user.allocationFOX = user.allocationFOX.add(allocationFOX);
-    totalAllocationFOX = totalAllocationFOX.add(allocationFOX);
-
-    user.allocationSHROOM = user.allocationSHROOM.add(allocationSHROOM);
-    totalAllocationSHROOM = totalAllocationSHROOM.add(allocationSHROOM);
-
-    emit Buy(msg.sender, amount);
-    // transfer contribution to treasury
-    SALE_TOKEN.safeTransferFrom(msg.sender, treasury, participationAmount);
+    _buy(amount, referralAddress, true);
   }
 
   /**
@@ -317,6 +307,64 @@ contract Presale is Ownable, ReentrancyGuard {
   /********************************************************/
   /****************** INTERNAL FUNCTIONS ******************/
   /********************************************************/
+
+  /**
+   * @dev Purchase an allocation for the sale for a value of "amount" SALE_TOKEN, referred by "referralAddress"
+   */
+  function _buy(uint256 amount, address referralAddress, bool isZap) private {
+    require(amount > 0, "buy: zero amount");
+
+    uint256 participationAmount = amount;
+    UserInfo storage user = userInfo[msg.sender];
+
+    // handle user's referral
+    if (user.allocationFOX == 0 && user.ref == address(0) && referralAddress != address(0) && referralAddress != msg.sender) {
+      // If first buy, and does not have any ref already set
+      user.ref = referralAddress;
+    }
+    referralAddress = user.ref;
+
+    if (referralAddress != address(0)) {
+      UserInfo storage referrer = userInfo[referralAddress];
+
+      // compute and send referrer share
+      uint256 refShareAmount = REFERRAL_SHARE.mul(amount).div(100);
+      SALE_TOKEN.safeTransferFrom(
+        isZap ? address(zap) : msg.sender, 
+        address(this), 
+        refShareAmount
+      );
+
+      referrer.refEarnings = referrer.refEarnings.add(refShareAmount);
+      participationAmount = participationAmount.sub(refShareAmount);
+
+      emit NewRefEarning(referralAddress, refShareAmount);
+    }
+
+    // 50% in FOX
+    uint256 allocationFOX = amount.mul(50).div(100);
+    // 50% in SHROOM
+    uint256 allocationSHROOM = amount - allocationFOX;
+
+    // update raised amounts
+    user.contribution = user.contribution.add(amount);
+    totalRaised = totalRaised.add(amount);
+
+    // update allocations
+    user.allocationFOX = user.allocationFOX.add(allocationFOX);
+    totalAllocationFOX = totalAllocationFOX.add(allocationFOX);
+
+    user.allocationSHROOM = user.allocationSHROOM.add(allocationSHROOM);
+    totalAllocationSHROOM = totalAllocationSHROOM.add(allocationSHROOM);
+
+    emit Buy(msg.sender, amount);
+    // transfer contribution to treasury
+    SALE_TOKEN.safeTransferFrom(
+      isZap ? address(zap) : msg.sender, 
+      treasury, 
+      participationAmount
+    );
+  }
 
   /**
    * @dev Safe token transfer function, in case rounding error causes contract to not have enough tokens

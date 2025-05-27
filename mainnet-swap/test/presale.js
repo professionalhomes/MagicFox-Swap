@@ -6,7 +6,7 @@ describe("Presale", function() {
     const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
     let ART, VE_FOX, VE_SHROOM, PRESALE; // Contracts
     let USDC, FOX, SHROOM, FOX_LP, SHROOM_LP; // Tokens
-    let owner, investor1, investor2, treasury; // Wallets
+    let owner, investor1, investor2, treasury, zap; // Wallets
     let now, start, end; // Presale timing
 
     before(async () => {
@@ -23,7 +23,7 @@ describe("Presale", function() {
         end = start + (60 * 60 * 24 * 30); // Presale lasts 30 days
 
         // Wallets
-        [owner, investor1, investor2, treasury] = await ethers.getSigners();
+        [owner, investor1, investor2, treasury, zap] = await ethers.getSigners();
 
         // Tokens
         const TokenContract = await ethers.getContractFactory("Token");
@@ -60,10 +60,11 @@ describe("Presale", function() {
         VE_SHROOM = await VeContract.deploy(SHROOM.address, ART.address);
         await VE_SHROOM.deployed();
 
-        const PresaleContract = await ethers.getContractFactory("Presale");
+        const PresaleContract = await ethers.getContractFactory("Fairlaunch");
         PRESALE = await PresaleContract.deploy(
             FOX.address, VE_FOX.address, SHROOM.address, VE_SHROOM.address,
-            USDC.address, start, end, treasury.address);
+            USDC.address, start, end, treasury.address, zap.address
+        );
         await PRESALE.deployed();
 
         // Approvals
@@ -87,8 +88,8 @@ describe("Presale", function() {
     });
 
     it("Constants are set corectly", async function() {
-        expect(await PRESALE.MAX_FOX_TO_DISTRIBUTE()).to.equal(ethers.utils.parseUnits("1558822", 18));
-        expect(await PRESALE.MAX_SHROOM_TO_DISTRIBUTE()).to.equal(ethers.utils.parseUnits("3116000", 18));
+        expect(await PRESALE.MAX_FOX_TO_DISTRIBUTE()).to.equal(ethers.utils.parseUnits("583105", 18));
+        expect(await PRESALE.MAX_SHROOM_TO_DISTRIBUTE()).to.equal(ethers.utils.parseUnits("3104848", 18));
         expect(await PRESALE.VE_TOKEN_SHARE()).to.equal(40);
         expect(await PRESALE.REFERRAL_SHARE()).to.equal(3);
     });

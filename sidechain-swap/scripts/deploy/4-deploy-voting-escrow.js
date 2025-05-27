@@ -1,16 +1,17 @@
 const hre = require("hardhat");
+const constants = require("../../../constants.js");
 
 async function main() {
     const addresses = hre.network.config.constants;
-    const ContractF = await hre.ethers.getContractFactory("VotingEscrow");
-    const contr = await ContractF.deploy(
-        addresses.token, // address FOX
-        addresses.veArt, // address ART
-    );
+    const ContractF = await hre.ethers.getContractFactory("VotingEscrowMirror");
+    const MIRROR = await upgrades.deployProxy(ContractF, [
+        addresses.token,
+        constants.BSC.veToken,
+        addresses.lzEndpoint
+    ]);
+    await MIRROR.deployed();
 
-    await contr.deployed();
-
-    console.log("VotingEscrow deployed to: %saddress/%s", hre.network.config.explorer, contr.address);
+    console.log("VotingEscrowMirror deployed to: %saddress/%s", hre.network.config.explorer, MIRROR.address);
 }
 
 main()

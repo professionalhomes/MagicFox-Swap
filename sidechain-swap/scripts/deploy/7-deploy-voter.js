@@ -7,7 +7,7 @@ async function main() {
         addresses.veToken, 
         addresses.pairFactory, 
         addresses.gaugeFactory, 
-        addresses.bribeFactory
+        addresses.bluechipFeeCollector
     ]);
     await VOTER.deployed();
 

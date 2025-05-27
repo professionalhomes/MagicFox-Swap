@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "../lz/interfaces/ILayerZeroEndpoint.sol";
 import "../lz/interfaces/ILayerZeroReceiver.sol";
 
-contract VotingEscrowMirror is Ownable, ILayerZeroReceiver {
-    // TODO add lzEndpoint
-    ILayerZeroEndpoint public constant lzEndpoint = ILayerZeroEndpoint(address(0));
-    uint256 public lzGasLimit = 200_000;
+contract VotingEscrowMirror is OwnableUpgradeable, ILayerZeroReceiver {
+    ILayerZeroEndpoint public lzEndpoint;
+    uint256 public lzGasLimit;
 
     struct Token {
         address owner;
@@ -17,22 +16,30 @@ contract VotingEscrowMirror is Ownable, ILayerZeroReceiver {
         uint counter;
     }
 
-    address public immutable token;
+    address public token;
     address public voter;
     address public team;
     address public mainchainAddress;
-    uint16 public mainchainId = 102; // LayerZero BSC chainId
-    mapping(address => bool) public whitelistedMirrors;
+    uint16 public constant MAINCHAIN_ID = 102; // LayerZero BSC chainId
+    // mapping(address => bool) public whitelistedMirrors;
 
     uint256 public _totalSupply;
     mapping(uint => Token) public tokens;
     mapping(address => uint[]) internal ownerToNFTokenIdList;
 
-    constructor(address _token_addr, address _mainchainAddress) {
+    constructor() {}
+    function initialize(
+        address _token_addr, 
+        address _mainchainAddress, 
+        address _lzEndpoint
+    ) initializer public {
+        __Ownable_init();
         token = _token_addr;
         voter = msg.sender;
         team = msg.sender;
         mainchainAddress = _mainchainAddress;
+        lzEndpoint = ILayerZeroEndpoint(_lzEndpoint);
+        lzGasLimit = 200_000;
     }
 
     function ownerOf(uint _tokenId) public view returns (address) {
@@ -61,10 +68,7 @@ contract VotingEscrowMirror is Ownable, ILayerZeroReceiver {
         tokens[_tokenId].attachments -= 1;
     }
 
-    // TODO: Should be internal, public for testing
-    function mirrorToken(address _owner, uint _tokenId, uint _balance, uint _counter, uint __totalSupply) public {
-        // only whitelisted address can mirror locks
-        require(whitelistedMirrors[msg.sender] == true);
+    function mirrorToken(address _owner, uint _tokenId, uint _balance, uint _counter, uint __totalSupply) internal {
         tokens[_tokenId] = Token(_owner, _balance, tokens[_tokenId].attachments, _counter);
         if (_counter == 1) {
             ownerToNFTokenIdList[_owner].push(_tokenId);
@@ -73,14 +77,14 @@ contract VotingEscrowMirror is Ownable, ILayerZeroReceiver {
     }
 
     function clearMirror(uint _tokenId) external payable {
-        require(msg.sender == tokens[_tokenId].owner);
-        require(tokens[_tokenId].attachments == 0);
+        require(msg.sender == tokens[_tokenId].owner, "Only tokenId owner");
+        require(tokens[_tokenId].attachments == 0, "tokenId still attached");
 
         bytes memory lzPayload = abi.encode(_tokenId, tokens[_tokenId].counter);
         bytes memory trustedPath = abi.encodePacked(mainchainAddress, address(this));
         bytes memory adapterParams = abi.encodePacked(uint16(1), lzGasLimit);
 
-        lzEndpoint.send{value: msg.value}(mainchainId, trustedPath, lzPayload, payable(msg.sender), address(0), adapterParams);
+        lzEndpoint.send{value: msg.value}(MAINCHAIN_ID, trustedPath, lzPayload, payable(msg.sender), address(0), adapterParams);
 
         delete tokens[_tokenId];
         for (uint i=0; i < ownerToNFTokenIdList[msg.sender].length; i++) {
@@ -94,6 +98,7 @@ contract VotingEscrowMirror is Ownable, ILayerZeroReceiver {
     function lzReceive(uint16 _srcChainId, bytes memory _srcAddress, uint64 _nonce, bytes memory _payload) override external {
         // lzReceive must be called by the endpoint for security
         require(msg.sender == address(lzEndpoint), "LzApp: invalid endpoint caller");
+        require(_srcChainId == MAINCHAIN_ID, "Invalid srcChainId");
 
         address srcAddressUA;
         assembly {
@@ -108,6 +113,7 @@ contract VotingEscrowMirror is Ownable, ILayerZeroReceiver {
             uint256 _counter,
             uint256 _totalSupply 
         ) = abi.decode(_payload, (address, uint256, uint256, uint256, uint256));
+        
         mirrorToken(_owner, _tokenId, _balance, _counter, _totalSupply);
     }
 
@@ -116,15 +122,15 @@ contract VotingEscrowMirror is Ownable, ILayerZeroReceiver {
         lzGasLimit = _lzGasLimit;
     }
 
-    function addWhitelistedMirror(address _mirror) external {
-        require(msg.sender == team);
-        whitelistedMirrors[_mirror] = true;
-    }
+    // function addWhitelistedMirror(address _mirror) external {
+    //     require(msg.sender == team);
+    //     whitelistedMirrors[_mirror] = true;
+    // }
 
-    function removeWhitelistedMirror(address _mirror) external {
-        require(msg.sender == team);
-        whitelistedMirrors[_mirror] = false;
-    }
+    // function removeWhitelistedMirror(address _mirror) external {
+    //     require(msg.sender == team);
+    //     whitelistedMirrors[_mirror] = false;
+    // }
 
     function setVoter(address _voter) external {
         require(msg.sender == team);

@@ -73,7 +73,7 @@ module.exports = {
         arbitrum: {
           url: "https://arb1.arbitrum.io/rpc",
           chainId: 42161,
-          gasPrice: 100000000, // 0.1 gwei
+          gasPrice: 1200000000, // 0.5 gwei
           gas: 8000000,
           accounts: [secret.privateKeyMainnet],
           explorer: 'https://arbiscan.io/',

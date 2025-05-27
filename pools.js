@@ -18,11 +18,11 @@ module.exports = {
       // foxLP_volatile_PH_WBNB
       gauge: '0x5D8C2F4FfFC7683dF539a9883c3e6c149A889eB1',
     },
-    // pool2: {
-    //   // ARBITRUM pool
-    //   gauge: '',
-    //   chainId: constants.ARBITRUM.lzChainId
-    // },
+    pool3: {
+      // ARBITRUM volatile_USDC_WETH
+      gauge: '0x95B896918BF60336526883117f7461fBbb766682',
+      chainId: constants.ARBITRUM.lzChainId
+    },
   },
 
   /**

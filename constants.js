@@ -17,7 +17,7 @@ module.exports = {
     veShroom: '', 
 
     /* chainlink */
-    chainlinkEpochController: '',
+    chainlinkEpochController: '0x18aC685D8D40eCBA614dcae0EBc35313DFD2eD84',
     chainlinkWeeklyEmissionBridge: '',
 
     /* dao */
@@ -52,22 +52,22 @@ module.exports = {
 
   ARBITRUM: {
     /* swap */
-    pairFactory: '', 
-    swapRouter: '', 
+    pairFactory: '0x407a4cDA343037FBCF7fdAEC97e0a8597437c860', 
+    swapRouter: '0x654F131605Fb2e8DB48bAD8a4077973DfFDDA01C', 
+    solidlyLib: '0xB48837F0C05c0931c7B3DcFDceA0365396c39F3A',
 
     /* token */
-    token: '', 
-    veArt: '', 
-    veToken: '', 
+    token: '0x6EB19f9D45DD3aa8fED5A5F30434F4c3858973CA', 
+    veToken: '0x78AE0bACB5771E265Fe530A4EF9DDDbD3467f6eb', 
 
     /* dao */
-    bribeFactory: '', 
-    gaugeFactory: '', 
-    voter: '',
-    bluechipVoter: '',
-    bluechipFeeCollector: '', 
-    lzReceiver: '', 
-    lzReceiverBluechip: '', 
+    bribeFactory: '0xb241D311f1114ECb6E210c40b0F2040AC8cD485e', 
+    gaugeFactory: '0xAa3e74d0729227a232e198C98Dfd5ab813b23b37', 
+    voter: '0x3903F5897E7A5a09F8dA9748537Cf429FD4B2b50',
+    bluechipVoter: '0x19202546c2A6ee04bf13883eCc87f678DcE618Cf',
+    bluechipFeeCollector: '0xEf187603caAfF55D27ade3F2a291AfE49f83c054', 
+    lzReceiver: '0xE97dCA1786Aaf17Ab4aE9c1eE78eC97881396968', 
+    lzReceiverBluechip: '0xB420D9C0993B23D650C66F9FeAEb760104E8058B', 
 
     /* LZ */
     lzChainId: 110,
@@ -75,7 +75,7 @@ module.exports = {
 
     /* UpgradableContracts admin */
     timelocker: '',
-    proxyAdmin: '', // still need to transfer ownership from deployer to timelocker
+    proxyAdmin: '0x4d5DC125BA9a9330d983DD4C0B915Cb726D7f2D5', // still need to transfer ownership from deployer to timelocker
 
     /* ERC20 */
     weth: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
@@ -83,7 +83,6 @@ module.exports = {
     usdc: '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8',
 
     /* LPs */
-    foxLP_volatile_PH_WETH: '',
-    foxLP_volatile_PH_USDC: '',
+    foxLP_volatile_USDC_WETH: '0xf82C9f8EeF2f4078583a780Abd82Ff2BF342183e',
   }
 };

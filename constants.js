@@ -18,7 +18,7 @@ module.exports = {
 
     /* chainlink */
     chainlinkEpochController: '0x18aC685D8D40eCBA614dcae0EBc35313DFD2eD84',
-    chainlinkWeeklyEmissionBridge: '',
+    chainlinkWeeklyEmissionBridge: '0x23078c78E09A9abC3C44f9b457cD98D0E5Ea3491',
 
     /* dao */
     bribeFactory: '0xAa3e74d0729227a232e198C98Dfd5ab813b23b37', 
@@ -63,8 +63,8 @@ module.exports = {
     /* dao */
     bribeFactory: '0xb241D311f1114ECb6E210c40b0F2040AC8cD485e', 
     gaugeFactory: '0xAa3e74d0729227a232e198C98Dfd5ab813b23b37', 
-    voter: '0x3903F5897E7A5a09F8dA9748537Cf429FD4B2b50',
-    bluechipVoter: '0x19202546c2A6ee04bf13883eCc87f678DcE618Cf',
+    voter: '0x529894865034cd9E5E6D3ed74769878Ce4c2A774',
+    bluechipVoter: '0x75B7Df866eD541398b77b8059cb09DcE35460736',
     bluechipFeeCollector: '0xEf187603caAfF55D27ade3F2a291AfE49f83c054', 
     lzReceiver: '0xE97dCA1786Aaf17Ab4aE9c1eE78eC97881396968', 
     lzReceiverBluechip: '0xB420D9C0993B23D650C66F9FeAEb760104E8058B', 
@@ -84,5 +84,6 @@ module.exports = {
 
     /* LPs */
     foxLP_volatile_USDC_WETH: '0xf82C9f8EeF2f4078583a780Abd82Ff2BF342183e',
+    foxLP_volatile_USDT_USDC: '0x83d91b9b0415F88192182255B239c5061445DE6D',
   }
 };

@@ -16,6 +16,7 @@ module.exports = {
   etherscan: {
     apiKey: {
        bsc: secret.bscScanAPI,
+       arbitrumOne: secret.arbScanAPI,
      }
   },
     // solidity: "0.6.12",

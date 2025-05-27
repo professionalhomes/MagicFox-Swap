@@ -4,6 +4,7 @@ pragma solidity 0.8.13;
 interface IBluechipVoter {
     function _ve() external view returns (address);
     function governor() external view returns (address);
+    function gauges(address _pair) external view returns (address);
     function factory() external view returns (address);
     function minter() external view returns(address);
     function emergencyCouncil() external view returns (address);
@@ -18,8 +19,8 @@ interface IBluechipVoter {
 
     function usedWeights(uint id) external view returns(uint);
     function lastVoted(uint id) external view returns(uint);
-    function gaugeVote(uint id, uint _index) external view returns(address _pair);
+    function poolVote(uint id, uint _index) external view returns(address _pair);
     function votes(uint id, address _pool) external view returns(uint votes);
-    function gaugeVoteLength(uint tokenId) external view returns(uint);
+    function poolVoteLength(uint tokenId) external view returns(uint);
     
 }

@@ -3,8 +3,7 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("VoterV2", function() {
-  let provider, VE, ART, TOKEN, PROXY_OFT, GAUGE_F, BRIBE_F, BRIBE_TOKEN;
-  let REWARD_DIST, MINTER, VOTER, BLUECHIP_VOTER, PAIR_F, owner, investor1, investor2, lzEndpoint;
+  let provider, VE, ART, TOKEN, PROXY_OFT, GAUGE_F, BRIBE_F, BRIBE_TOKEN, REWARD_DIST, MINTER, VOTER, PAIR_F, owner, investor1, investor2, lzEndpoint;
   const ONE_WEEK = 24 * 3600 * 7;
   let testTokens = []
 
@@ -13,7 +12,7 @@ describe("VoterV2", function() {
   });
 
   beforeEach(async () => {
-    [ owner, investor1, investor2, lzEndpoint, bluechipFeeCollector ] = await ethers.getSigners();
+    [ owner, investor1, investor2, lzEndpoint ] = await ethers.getSigners();
 
     provider = ethers.getDefaultProvider();
 
@@ -77,22 +76,12 @@ describe("VoterV2", function() {
 
     await BRIBE_F.setVoter(VOTER.address);
 
-    const BLUECHIP_VOTERContract = await ethers.getContractFactory("BluechipVoter");
-    BLUECHIP_VOTER = await upgrades.deployProxy(BLUECHIP_VOTERContract, [
-      VE.address, 
-      PAIR_F.address, 
-      GAUGE_F.address, 
-      PROXY_OFT.address, 
-      bluechipFeeCollector.address
-    ]);
-    await BLUECHIP_VOTER.deployed();
-
     const RDContract = await ethers.getContractFactory("RewardsDistributor");
     REWARD_DIST = await RDContract.deploy(VE.address, TOKEN.address);
     await REWARD_DIST.deployed();
 
     const MINTERContract = await ethers.getContractFactory("Minter");
-    MINTER = await upgrades.deployProxy(MINTERContract, [VOTER.address, BLUECHIP_VOTER.address, VE.address, REWARD_DIST.address]);
+    MINTER = await upgrades.deployProxy(MINTERContract, [VOTER.address, VE.address, REWARD_DIST.address]);
     await MINTER.deployed();
 
     await VE.setVoter(VOTER.address);
@@ -114,15 +103,15 @@ describe("VoterV2", function() {
     // Create gauge
     console.log(`---- createGauge 0 ----`);
     await VOTER.createGauge(testTokens[0].address, 0);
-    
+    await expect(VOTER.createGauge(testTokens[0].address, 0)).to.be.revertedWith('exists');
+    expect(await VOTER.pools(0)).to.equal(testTokens[0].address);
+
     console.log(`---- createGauge 1 ----`);
     await VOTER.createGauge(testTokens[1].address, 0);
+    expect(await VOTER.pools(1)).to.equal(testTokens[1].address);
 
-    const gauge0_address = await VOTER.gaugeList(0);
-    const gauge1_address = await VOTER.gaugeList(1);
-
-    expect(await VOTER.poolForGauge(gauge0_address)).to.equal(testTokens[0].address);
-    expect(await VOTER.poolForGauge(gauge1_address)).to.equal(testTokens[1].address);
+    const gauge0_address = await VOTER.gauges(testTokens[0].address);
+    const gauge1_address = await VOTER.gauges(testTokens[1].address);
 
     // Add bribes
     const gauge0_bribes = await VOTER.external_bribes(gauge0_address);
@@ -140,7 +129,7 @@ describe("VoterV2", function() {
     console.log(`\n---- vote ----`);
     console.log(`gauge0 weight: 1000`);
     console.log(`gauge1 weight: 100`);
-    await VOTER.connect(investor1).vote(tokenId, [gauge0_address, gauge1_address], [1000, 100]);
+    await VOTER.connect(investor1).vote(tokenId, [testTokens[0].address, testTokens[1].address], [1000, 100]);
 
     // await testTokens[0].connect(investor1).approve(GAUGE_0.address, ethers.constants.MaxUint256);
     // await GAUGE_0.deposit(ethers.utils.parseUnits('100', 18));
@@ -198,8 +187,8 @@ describe("VoterV2", function() {
     await VOTER.createGauge(testTokens[0].address, 0);
     const tokenId0 = await VE.tokenOfOwnerByIndex(investor1.address, 0);
 
-    const gauge0_address = await VOTER.gaugeList(0);
-    // const gauge1_address = await VOTER.gaugeList(1);
+    const gauge0_address = await VOTER.gauges(testTokens[0].address);
+    const gauge1_address = await VOTER.gauges(testTokens[1].address);
 
     const GAUGE_0 = await ethers.getContractAt("GaugeV2", gauge0_address);
     console.log(`GAUGE_0 totalSupply: ${await GAUGE_0.totalSupply()}`);
@@ -242,6 +231,6 @@ describe("VoterV2", function() {
     console.log(`VE owner:                     ${await VE.ownerOf(tokenId0)}`);
 
     console.log(`\n---- vote ----`);
-    await VOTER.connect(investor2).vote(tokenId0, [gauge0_address, ethers.constants.AddressZero], [1000, 100]);
+    await VOTER.connect(investor2).vote(tokenId0, [testTokens[0].address, testTokens[1].address], [1000, 100]);
   });
 });

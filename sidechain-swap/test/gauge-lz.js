@@ -50,8 +50,8 @@ describe("Gauge", function() {
     ART = await upgrades.deployProxy(ArtContract, []);
     await ART.deployed();
 
-    const VEContract = await ethers.getContractFactory("VotingEscrowMirror");
-    VE = await VEContract.deploy(TOKEN.address);
+    const VEContract = await ethers.getContractFactory("VotingEscrow");
+    VE = await VEContract.deploy(TOKEN.address, ART.address);
     await VE.deployed();
 
     const BRIBEContract = await ethers.getContractFactory("BribeFactoryV2");
@@ -69,10 +69,12 @@ describe("Gauge", function() {
     const LZReceiverContract = await ethers.getContractFactory("LZReceiver");
     LZ_RECEIVER = await LZReceiverContract.deploy(VOTER.address, lzEndpoint.address);
     await LZ_RECEIVER.deployed();
+
     await VOTER.setLzReceiver(LZ_RECEIVER.address);
+
     await BRIBE_F.setVoter(VOTER.address);
 
-    // await VE.setVoter(VOTER.address);
+    await VE.setVoter(VOTER.address);
     
     // create veNFT lock
     // await TOKEN.connect(investor1).approve(VE.address, ethers.constants.MaxUint256);

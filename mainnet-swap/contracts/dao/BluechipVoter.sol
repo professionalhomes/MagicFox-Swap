@@ -39,16 +39,17 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
 
     uint public totalWeight; // total voting weight
 
-    address[] public gaugeList; // all gauges viable for incentives
+    address[] public pools; // all pools viable for incentives
+    mapping(address => address) public gauges; // pool => gauge
     mapping(address => uint) public gaugeChain; // gauge => uint
     mapping(uint16 => address) public sidechainManager; // chain => gauge manager
     mapping(uint16 => address[]) public chainGauges; // chain => gauge list
     mapping(uint => mapping(address => uint)) public epochBridgeData; // epoch => gauge => claimable
     mapping(address => uint) public gaugesDistributionTimestmap;
     mapping(address => address) public poolForGauge; // gauge => pool
-    mapping(address => uint256) public weights; // gauge => weight
-    mapping(uint => mapping(address => uint256)) public votes; // nft => gauge => votes
-    mapping(uint => address[]) public gaugeVote; // nft => gauges
+    mapping(address => uint256) public weights; // pool => weight
+    mapping(uint => mapping(address => uint256)) public votes; // nft => pool => votes
+    mapping(uint => address[]) public poolVote; // nft => pools
     mapping(uint => uint) public usedWeights;  // nft => total voting weight of user
     mapping(uint => uint) public lastVoted; // nft => timestamp of last vote, to ensure one vote per epoch
     mapping(address => bool) public isGauge;
@@ -116,18 +117,18 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
     }
 
     function _reset() internal {
-        address[] storage _gaugeVote = gaugeVote[VOTER_TOKEN_ID];
-        uint _gaugeVoteCnt = _gaugeVote.length;
+        address[] storage _poolVote = poolVote[VOTER_TOKEN_ID];
+        uint _poolVoteCnt = _poolVote.length;
         uint256 _totalWeight = 0;
 
-        for (uint i = 0; i < _gaugeVoteCnt; i ++) {
-            address _gauge = _gaugeVote[i];
-            uint256 _votes = votes[VOTER_TOKEN_ID][_gauge];
+        for (uint i = 0; i < _poolVoteCnt; i ++) {
+            address _pool = _poolVote[i];
+            uint256 _votes = votes[VOTER_TOKEN_ID][_pool];
 
             if (_votes != 0) {
-                _updateFor(_gauge);
-                weights[_gauge] -= _votes;
-                votes[VOTER_TOKEN_ID][_gauge] -= _votes;
+                _updateFor(gauges[_pool]);
+                weights[_pool] -= _votes;
+                votes[VOTER_TOKEN_ID][_pool] -= _votes;
                 if (_votes > 0) {
                     _totalWeight += _votes;
                 } else {
@@ -138,51 +139,52 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
         }
         totalWeight -= uint256(_totalWeight);
         usedWeights[VOTER_TOKEN_ID] = 0;
-        delete gaugeVote[VOTER_TOKEN_ID];
+        delete poolVote[VOTER_TOKEN_ID];
     }
 
     function poke() external nonReentrant {
         require(msg.sender == governor, "Only governor");
         //require((block.timestamp / DURATION) * DURATION > lastVoted[VOTER_TOKEN_ID], "TOKEN_ALREADY_VOTED_THIS_EPOCH");
-        address[] memory _gaugeVote = gaugeVote[VOTER_TOKEN_ID];
-        uint _gaugeCnt = _gaugeVote.length;
-        uint256[] memory _weights = new uint256[](_gaugeCnt);
+        address[] memory _poolVote = poolVote[VOTER_TOKEN_ID];
+        uint _poolCnt = _poolVote.length;
+        uint256[] memory _weights = new uint256[](_poolCnt);
 
-        for (uint i = 0; i < _gaugeCnt; i ++) {
-            _weights[i] = votes[VOTER_TOKEN_ID][_gaugeVote[i]];
+        for (uint i = 0; i < _poolCnt; i ++) {
+            _weights[i] = votes[VOTER_TOKEN_ID][_poolVote[i]];
         }
 
-        _vote(_gaugeVote, _weights);
+        _vote(_poolVote, _weights);
     }
 
-    function _vote(address[] memory _gaugeVote, uint256[] memory _weights) internal {
+    function _vote(address[] memory _poolVote, uint256[] memory _weights) internal {
         _reset();
-        uint _gaugeCnt = _gaugeVote.length;
+        uint _poolCnt = _poolVote.length;
         uint256 _weight = 1 * 1e18;
         uint256 _totalVoteWeight = 0;
         uint256 _totalWeight = 0;
         uint256 _usedWeight = 0;
 
-        for (uint i = 0; i < _gaugeCnt; i++) {
+        for (uint i = 0; i < _poolCnt; i++) {
             _totalVoteWeight += _weights[i];
         }
 
-        for (uint i = 0; i < _gaugeCnt; i++) {
-            address _gauge = _gaugeVote[i];
+        for (uint i = 0; i < _poolCnt; i++) {
+            address _pool = _poolVote[i];
+            address _gauge = gauges[_pool];
 
             if (isGauge[_gauge]) {
-                uint256 _gaugeWeight = _weights[i] * _weight / _totalVoteWeight;
-                require(votes[VOTER_TOKEN_ID][_gauge] == 0);
-                require(_gaugeWeight != 0);
+                uint256 _poolWeight = _weights[i] * _weight / _totalVoteWeight;
+                require(votes[VOTER_TOKEN_ID][_pool] == 0);
+                require(_poolWeight != 0);
                 _updateFor(_gauge);
 
-                gaugeVote[VOTER_TOKEN_ID].push(_gauge);
+                poolVote[VOTER_TOKEN_ID].push(_pool);
 
-                weights[_gauge] += _gaugeWeight;
-                votes[VOTER_TOKEN_ID][_gauge] += _gaugeWeight;
-                _usedWeight += _gaugeWeight;
-                _totalWeight += _gaugeWeight;
-                emit Voted(msg.sender, VOTER_TOKEN_ID, _gaugeWeight);
+                weights[_pool] += _poolWeight;
+                votes[VOTER_TOKEN_ID][_pool] += _poolWeight;
+                _usedWeight += _poolWeight;
+                _totalWeight += _poolWeight;
+                emit Voted(msg.sender, VOTER_TOKEN_ID, _poolWeight);
             }
         }
         
@@ -191,12 +193,12 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
     }
 
 
-    function vote(address[] calldata _gaugeVote, uint256[] calldata _weights) external nonReentrant {
+    function vote(address[] calldata _poolVote, uint256[] calldata _weights) external nonReentrant {
         require(msg.sender == governor, "Only governor");
         //require((block.timestamp / DURATION) * DURATION > lastVoted[VOTER_TOKEN_ID], "TOKEN_ALREADY_VOTED_THIS_EPOCH");
-        require(_gaugeVote.length == _weights.length);
+        require(_poolVote.length == _weights.length);
         lastVoted[VOTER_TOKEN_ID] = block.timestamp;
-        _vote(_gaugeVote, _weights);
+        _vote(_poolVote, _weights);
     }
 
     function createGauge(address _pool, uint16 chainId) external returns (address) {
@@ -207,7 +209,7 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
             _pool = address(new SidechainPool());
         }
 
-
+        require(gauges[_pool] == address(0x0), "exists");
         bool isPair = IPairFactory(factory).isPair(_pool);
         address tokenA;
         address tokenB;
@@ -224,12 +226,12 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
         }
 
         IERC20(base).approve(_gauge, type(uint).max);
-
+        gauges[_pool] = _gauge;
         poolForGauge[_gauge] = _pool;
         isGauge[_gauge] = true;
         isAlive[_gauge] = true;
         _updateFor(_gauge);
-        gaugeList.push(_gauge);
+        pools.push(_pool);
         emit GaugeCreated(_gauge, msg.sender, fees_collector, _pool);
         return _gauge;
     }
@@ -274,11 +276,11 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
     }
 
     function length() external view returns (uint) {
-        return gaugeList.length;
+        return pools.length;
     }
 
-    function gaugeVoteLength(uint tokenId) external view returns(uint) { 
-        return gaugeVote[tokenId].length;
+    function poolVoteLength(uint tokenId) external view returns(uint) { 
+        return poolVote[tokenId].length;
     }
 
 
@@ -299,12 +301,12 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
 
     function updateForRange(uint start, uint end) public {
         for (uint i = start; i < end; i++) {
-            _updateFor(gaugeList[i]);
+            _updateFor(gauges[pools[i]]);
         }
     }
 
     function updateAll() external {
-        updateForRange(0, gaugeList.length);
+        updateForRange(0, pools.length);
     }
 
     function updateGauge(address _gauge) external {
@@ -312,7 +314,8 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
     }
 
     function _updateFor(address _gauge) internal {
-        uint256 _supplied = weights[_gauge];
+        address _pool = poolForGauge[_gauge];
+        uint256 _supplied = weights[_pool];
         if (_supplied > 0) {
             uint _supplyIndex = supplyIndex[_gauge];
             uint _index = index; // get global index0 for accumulated distro
@@ -347,7 +350,7 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
         distributeSidechain(chainId, period, dstGasLimit, 0, chainGauges[chainId].length);
     }
 
-    function distributeSidechain(uint16 chainId, uint256 period, uint256 dstGasLimit, uint256 from, uint256 to) public payable nonReentrant {
+    function distributeSidechain(uint16 chainId, uint256 period, uint256 dstGasLimit, uint256 from, uint256 to) public payable {
         require(chainId > 0, "invalid chainId");
         address _gauge;
         uint256 _totalClaimable;
@@ -375,8 +378,7 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
             IERC20(base).transfer(proxyOFT, _totalClaimable);
         } else {
             // Return lzgas to sender
-            (bool success, ) = msg.sender.call{value: msg.value}("");
-            require(success, "msg.sender rejected transfer");
+            payable(msg.sender).transfer(msg.value);
         }
     }
 
@@ -402,12 +404,12 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
     }
 
     function distributeAll() external {
-        distribute(0, gaugeList.length);
+        distribute(0, pools.length);
     }
 
     function distribute(uint start, uint finish) public {
         for (uint x = start; x < finish; x++) {
-            distribute(gaugeList[x]);
+            distribute(gauges[pools[x]]);
         }
     }
 
@@ -444,10 +446,31 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
         require(isAlive[_gauge], "gauge already dead");
         isAlive[_gauge] = false;
         claimable[_gauge] = 0;
+        address _pool = poolForGauge[_gauge];
+        gauges[_pool] = address(0);
         poolForGauge[_gauge] = address(0);
         isGauge[_gauge] = false;
         isAlive[_gauge] = false;
+        claimable[_gauge] = 0;
         emit GaugeKilled(_gauge);
+    }
+
+    function initGauges(address[] memory _gauges, address[] memory _pools) public {
+        require(msg.sender == emergencyCouncil);
+        uint256 i = 0;
+        for(i; i < _pools.length; i++){
+            address _pool = _pools[i];
+            address _gauge = _gauges[i];
+
+            IERC20(base).approve(_gauge, type(uint).max);
+            gauges[_pool] = _gauge;
+            poolForGauge[_gauge] = _pool;
+            isGauge[_gauge] = true;
+            isAlive[_gauge] = true;
+            _updateFor(_gauge);
+            pools.push(_pool);
+            emit GaugeCreated(_gauge, msg.sender, fees_collector, _pool);
+        }
     }
 
     function increaseGaugeApprovals(address _gauge) external {
@@ -462,15 +485,15 @@ contract BluechipVoter is IBluechipVoter, OwnableUpgradeable, ReentrancyGuardUpg
         fees_collector = _fees_collector; 
     }
 
-    function gaugeListExtended() external view returns(address[] memory, address[] memory, uint16[] memory){
-        address[] memory poolList = new address[](gaugeList.length);
-        uint16[] memory chainIdList = new uint16[](gaugeList.length);
-        for (uint i = 0; i < gaugeList.length; i++) {
-            poolList[i] = poolForGauge[gaugeList[i]];
-            chainIdList[i] = uint16(gaugeChain[gaugeList[i]]);
+    function poolsList() external view returns(address[] memory, address[] memory, uint16[] memory){
+        address[] memory gaugeList = new address[](pools.length);
+        uint16[] memory chainIdList = new uint16[](pools.length);
+        for (uint i = 0; i < pools.length; i++) {
+            gaugeList[i] = gauges[pools[i]];
+            chainIdList[i] = uint16(gaugeChain[gauges[pools[i]]]);
         }
 
-        return (gaugeList, poolList, chainIdList);
+        return (pools, gaugeList, chainIdList);
     }
 
     function chainGaugesList(uint16 _chainId) external view returns(address[] memory){

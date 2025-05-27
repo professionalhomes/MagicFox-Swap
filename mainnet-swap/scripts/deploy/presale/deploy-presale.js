@@ -9,8 +9,8 @@ async function main() {
         addresses.shroom,
         addresses.veShroom,
         '0x40E7f9B2f080567c41667E0648BA870a85797694', // Use fake usdc for testing -- addresses.usdc, -- SALE_TOKEN
-        1682103600, // Friday, April 21, 2023 7:00:00 PM -- START_TIME
-        1682362800, // Monday, April 24, 2023 7:00:00 PM -- END_TIME
+        1681642800, // Sunday, April 16, 2023 11:00:00 AM -- START_TIME
+        1682074800, // Friday, April 21, 2023 11:00:00 AM -- END_TIME
         addresses.treasury // treasury
     );
 

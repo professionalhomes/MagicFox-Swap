@@ -181,7 +181,7 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
                 tokenIds[account] = tokenId;
                 IVoter(_VE.voter()).attachTokenToGauge(tokenId, account);
             }
-            require(tokenIds[account] == tokenId, "Token already attached");
+            require(tokenIds[account] == tokenId);
         } else {
             tokenId = tokenIds[account];
         }

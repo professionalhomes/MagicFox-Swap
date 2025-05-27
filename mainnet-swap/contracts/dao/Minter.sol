@@ -188,14 +188,14 @@ contract Minter is IMinter, OwnableUpgradeable {
             _rewards_distributor.checkpoint_token(); // checkpoint token balance that was just minted in rewards distributor
             _rewards_distributor.checkpoint_total_supply(); // checkpoint supply
 
-            uint _bluechip = _gauge * 30 / 100;
+            uint _bluechip = _gauge * 50 / 100;
             _gauge -= _bluechip;
 
-            // 70% to regular gauges -- managed by voters
+            // 50% to regular gauges -- managed by voters
             _token.approve(address(_voter), _gauge);
             _voter.notifyRewardAmount(_gauge);
 
-            // 30% to bluechip gauges -- managed by protocol owner
+            // 50% to bluechip gauges -- managed by protocol owner
             _token.approve(address(_bluechip_voter), _bluechip);
             _bluechip_voter.notifyRewardAmount(_bluechip);
 

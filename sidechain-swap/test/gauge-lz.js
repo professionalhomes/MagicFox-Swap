@@ -3,7 +3,7 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("Gauge", function() {
-  let provider, VE, ART, TOKEN, ROUTER, GAUGE_F, BRIBE_F, VOTER, PAIR_F, LZ_RECEIVER, owner, investor1, investor2, lzEndpoint;
+  let provider, VE, TOKEN, ROUTER, GAUGE_F, BRIBE_F, VOTER, PAIR_F, LZ_RECEIVER, owner, investor1, investor2, lzEndpoint, mainchainVE;
   let mainGauge0, mainGauge1, mainGauge2; // main chain gauges
   const ONE_WEEK = 24 * 3600 * 7;
   let testTokens;
@@ -19,7 +19,7 @@ describe("Gauge", function() {
     let dayOfWeek = new Date(await time.latest() * 1000).getDay();
     await time.increase(60 * 60 * 24 * (7 - dayOfWeek)); 
 
-    [ owner, investor1, investor2, lzEndpoint, mainGauge0, mainGauge1, mainGauge2 ] = await ethers.getSigners();
+    [ owner, investor1, investor2, lzEndpoint, mainchainVE, mainGauge0, mainGauge1, mainGauge2 ] = await ethers.getSigners();
 
     provider = ethers.getDefaultProvider();
 
@@ -46,12 +46,12 @@ describe("Gauge", function() {
     testTokens[0].connect(investor1).approve(investor2.address, ethers.constants.MaxUint256);
     testTokens[0].connect(investor1).transfer(investor2.address, ethers.utils.parseUnits('100', 18));
     
-    const ArtContract = await ethers.getContractFactory("VeArt");
-    ART = await upgrades.deployProxy(ArtContract, []);
-    await ART.deployed();
-
     const VEContract = await ethers.getContractFactory("VotingEscrowMirror");
-    VE = await VEContract.deploy(TOKEN.address);
+    VE = await upgrades.deployProxy(VEContract, [
+      TOKEN.address,
+      mainchainVE.address,
+      lzEndpoint.address
+    ]);
     await VE.deployed();
 
     const BRIBEContract = await ethers.getContractFactory("BribeFactoryV2");
@@ -120,8 +120,8 @@ describe("Gauge", function() {
     );
     await LZ_RECEIVER.connect(lzEndpoint).lzReceive(102, srcAddressPayload, 1, payload); // 102 -- bsc LZ internal chainId
 
-    const gauge0_address = await VOTER.gauges(testTokens[0].address);
-    const gauge1_address = await VOTER.gauges(testTokens[1].address);
+    const gauge0_address = await VOTER.gaugeList(0);
+    const gauge1_address = await VOTER.gaugeList(1);
 
     const gaugeContract = await ethers.getContractFactory("GaugeV2");
     const gauge0 = await gaugeContract.attach(gauge0_address);
@@ -136,7 +136,7 @@ describe("Gauge", function() {
     console.log(await VOTER.availableEmissions(timestamp, mainGauge2.address));
 
     await VOTER.connect(owner).createGauge(testTokens[2].address, mainGauge2.address);
-    const gauge2_address = await VOTER.gauges(testTokens[2].address);
+    const gauge2_address = await VOTER.gaugeList(2);
 
     await VOTER.distribute(timestamp, [mainGauge0.address, mainGauge1.address, mainGauge2.address]);
 

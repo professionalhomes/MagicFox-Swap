@@ -3,7 +3,8 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("VoterV2", function() {
-  let provider, VE, ART, TOKEN, PROXY_OFT, GAUGE_F, BRIBE_F, BRIBE_TOKEN, REWARD_DIST, MINTER, VOTER, PAIR_F, owner, investor1, investor2, lzEndpoint;
+  let provider, VE, ART, TOKEN, PROXY_OFT, GAUGE_F, BRIBE_F, BRIBE_TOKEN, REWARD_DIST;
+  let MINTER, VOTER, PAIR_F, owner, investor1, investor2, lzEndpoint, mainchainVE, BLUECHIP_VOTER;
   const ONE_WEEK = 24 * 3600 * 7;
   let testTokens = []
 
@@ -12,7 +13,7 @@ describe("VoterV2", function() {
   });
 
   beforeEach(async () => {
-    [ owner, investor1, investor2, lzEndpoint, mainGauge0 ] = await ethers.getSigners();
+    [ owner, investor1, investor2, lzEndpoint, mainchainVE, BLUECHIP_VOTER, mainGauge0 ] = await ethers.getSigners();
 
     provider = ethers.getDefaultProvider();
 
@@ -48,13 +49,13 @@ describe("VoterV2", function() {
     const BribeTokenContract = await ethers.getContractFactory("DummyToken");
     BRIBE_TOKEN = await BribeTokenContract.deploy(owner.address);
     await BRIBE_TOKEN.deployed();
-    
-    const ArtContract = await ethers.getContractFactory("VeArt");
-    ART = await upgrades.deployProxy(ArtContract, []);
-    await ART.deployed();
 
     const VEContract = await ethers.getContractFactory("VotingEscrowMirror");
-    VE = await VEContract.deploy(TOKEN.address, "0x0000000000000000000000000000000000000000");
+    VE = await upgrades.deployProxy(VEContract, [
+      TOKEN.address,
+      mainchainVE.address,
+      lzEndpoint.address
+    ]);
     await VE.deployed();
 
     //await TOKEN.connect(investor1).approve(VE.address, ethers.constants.MaxUint256);
@@ -81,7 +82,7 @@ describe("VoterV2", function() {
     // // MINTER = await upgrades.deployProxy(MINTERContract, [VOTER.address, VE.address, REWARD_DIST.address]);
     // // await MINTER.deployed();
 
-    await VE.setVoter(VOTER.address);
+    await VE.setVoter(VOTER.address, BLUECHIP_VOTER.address);
     // // await TOKEN.setMinter(MINTER.address);
     // // await VOTER.setMinter(MINTER.address);
     // // await REWARD_DIST.setDepositor(MINTER.address);
@@ -92,7 +93,7 @@ describe("VoterV2", function() {
     // // await TOKEN.connect(investor2).approve(VE.address, ethers.constants.MaxUint256);
     // //await VE.connect(investor1).create_lock(ethers.utils.parseUnits('100.00', 18), 3600 * 24 * 14); // 14 days
 
-    await VE.addWhitelistedMirror(investor1.address);
+    // await VE.addWhitelistedMirror(investor1.address);
     await VE.connect(investor1).mirrorToken(investor1.address, 10, ethers.utils.parseUnits('1.00', 18), 1, ethers.utils.parseUnits('1.00', 18));
     await VE.connect(investor1).mirrorToken(investor1.address, 11, ethers.utils.parseUnits('2.00', 18), 1, ethers.utils.parseUnits('3.00', 18));
     // await VE.connect(investor1).create_lock(ethers.utils.parseUnits('1.00', 18), 2 * 365 * 86400); // 2 years

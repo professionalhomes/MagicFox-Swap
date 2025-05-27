@@ -95,7 +95,7 @@ describe("VoterV2", function() {
     MINTER = await upgrades.deployProxy(MINTERContract, [VOTER.address, BLUECHIP_VOTER.address, VE.address, REWARD_DIST.address]);
     await MINTER.deployed();
 
-    await VE.setVoter(VOTER.address);
+    await VE.setVoter(VOTER.address, BLUECHIP_VOTER.address);
     await TOKEN.setMinter(MINTER.address);
     await VOTER.setMinter(MINTER.address);
     await REWARD_DIST.setDepositor(MINTER.address);

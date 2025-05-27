@@ -27,6 +27,8 @@ contract VotingEscrowMirror is OwnableUpgradeable, ILayerZeroReceiver {
     mapping(uint => Token) public tokens;
     mapping(address => uint[]) internal ownerToNFTokenIdList;
 
+    address public bluechipVoter;
+
     constructor() {}
     function initialize(
         address _token_addr, 
@@ -59,12 +61,12 @@ contract VotingEscrowMirror is OwnableUpgradeable, ILayerZeroReceiver {
     }
 
     function attach(uint _tokenId) external {
-        require(msg.sender == voter);
+        require(msg.sender == voter || msg.sender == bluechipVoter);
         tokens[_tokenId].attachments += 1;
     }
 
     function detach(uint _tokenId) external {
-        require(msg.sender == voter);
+        require(msg.sender == voter || msg.sender == bluechipVoter);
         tokens[_tokenId].attachments -= 1;
     }
 
@@ -132,8 +134,9 @@ contract VotingEscrowMirror is OwnableUpgradeable, ILayerZeroReceiver {
     //     whitelistedMirrors[_mirror] = false;
     // }
 
-    function setVoter(address _voter) external {
+    function setVoter(address _voter, address _bluechipVoter) external {
         require(msg.sender == team);
         voter = _voter;
+        bluechipVoter = _bluechipVoter;
     }
 }

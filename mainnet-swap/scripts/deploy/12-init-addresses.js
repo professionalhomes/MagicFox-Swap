@@ -16,7 +16,7 @@ async function main() {
     await tx.wait();
     console.log("BRIBE_F.setVoter success");
 
-    tx = await VE.setVoter(addresses.voter);
+    tx = await VE.setVoter(addresses.voter, addresses.bluechipVoter);
     await tx.wait();
     console.log("VE.setVoter success");
 

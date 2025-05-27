@@ -210,7 +210,15 @@ contract Fairlaunch is Ownable, ReentrancyGuard {
     address[] calldata path,
     address referralAddress
   ) external payable isSaleActive nonReentrant {
-    // All check are done in ZAP. Zap is used to never mix usdc tokens of ref earnings and converts.
+    require(
+        inputToken == address(0) || path[0] == inputToken,
+        "wrong path path[0]"
+    );
+    require(
+        path[path.length - 1] == address(SALE_TOKEN),
+        "wrong path path[-1]"
+    );
+
     uint256 amount = zap.convert{value: msg.value}(
       msg.sender,
       inputToken,

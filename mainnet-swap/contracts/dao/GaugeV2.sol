@@ -168,7 +168,13 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
 
     ///@notice deposit internal
     function _deposit(uint256 amount, address account, uint256 tokenId) internal nonReentrant updateReward(account) {
-        require(amount > 0, "deposit(Gauge): cannot stake 0");
+        if (amount == 0) {
+            // Allow boost with veNFT without depositing extra amount
+            require(
+                balances[account] > 0 && tokenId > 0, 
+                "deposit(Gauge): deposit 0 allowed only if already balance > 0 and tokenId != 0."
+            );
+        }
 
         balances[account] = balances[account].add(amount);
         _totalSupply = _totalSupply.add(amount);

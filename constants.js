@@ -86,5 +86,6 @@ module.exports = {
     /* LPs */
     foxLP_volatile_USDC_WETH: '0xf82C9f8EeF2f4078583a780Abd82Ff2BF342183e',
     foxLP_volatile_USDT_USDC: '0x83d91b9b0415F88192182255B239c5061445DE6D',
+    foxLP_volatile_USDT_WETH: '0xd0aFBD4B188266D091A4199933E5ABf5Fe340bF4',
   }
 };

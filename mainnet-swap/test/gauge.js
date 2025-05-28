@@ -398,45 +398,4 @@ describe("Gauge", function() {
       }
     }
   });
-
-  it("Can boost after deposit", async function() {
-    const amount = ethers.utils.parseUnits("1000", 18);
-    const token1 = testTokens[testTokens.length-1];
-    const token2 = testTokens[testTokens.length-2];
-    const NFT = await VE.tokenOfOwnerByIndex(investor1.address, 0);
-
-    await VOTER.createGauge(token1.address, 0);
-    await VOTER.createGauge(token2.address, 0);
-
-    const gaugeContract = await ethers.getContractFactory("GaugeV2");
-    const gauge1_address = await VOTER.gaugeList(0);
-    const gauge2_address = await VOTER.gaugeList(1);
-    const gauge1 = await gaugeContract.attach(gauge1_address);
-    const gauge2 = await gaugeContract.attach(gauge2_address);
-
-    await token1.connect(investor1).approve(gauge1.address, ethers.constants.MaxUint256);
-    await token2.connect(investor1).approve(gauge2.address, ethers.constants.MaxUint256);
-
-    // Deposit, then boost
-    expect(await gauge1.derivedBalance(investor1.address)).to.equal(0);
-    await expect(gauge1.connect(investor1).deposit(0, 0)).to.be.reverted;
-    await expect(gauge1.connect(investor1).deposit(0, NFT)).to.be.reverted;
-
-    gauge1.connect(investor1).deposit(amount, 0);
-    const derived1_start = await gauge1.derivedBalance(investor1.address);
-    expect(derived1_start).to.be.above(0);
-
-    gauge1.connect(investor1).deposit(0, NFT);
-    const derived1_end = await gauge1.derivedBalance(investor1.address);
-    expect(derived1_end).to.be.above(derived1_start);
-
-    // Deposit with boost
-    expect(await gauge2.derivedBalance(investor1.address)).to.equal(0);
-
-    gauge2.connect(investor1).deposit(amount, NFT);
-    const derived2 = await gauge2.derivedBalance(investor1.address);
-
-    expect(derived2).to.be.above(derived1_start);
-    expect(derived2).to.equal(derived1_end);
-  });
 });

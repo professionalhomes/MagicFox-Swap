@@ -15,25 +15,30 @@ module.exports = {
       gauge: '0x4B666e3Fe15fcaeE5bBaa865caf076cc6781EB20',
     },
     pool2: {
-      // foxLP_volatile_PH_WBNB
+      // foxLP_volatile_PH_WBNB -- old LP
       gauge: '0x5D8C2F4FfFC7683dF539a9883c3e6c149A889eB1',
     },
     pool3: {
       // ARBITRUM volatile_USDC_WETH
       gauge: '0x95B896918BF60336526883117f7461fBbb766682',
-      chainId: constants.ARBITRUM.lzChainId
+      chainId: constants.ARBITRUM.lzChainId,
+      sideGauge: '0x002323A44DeB866E4503c2757B6598CC346C1C83',
+    },
+    pool4: {
+      // foxLP_volatile_PH_WBNB -- NEW
+      gauge: '0x78cfF03c1e9CC21DA28859B0884E162Fc51d9e66',
     },
   },
 
-  /**
-   * ARBITRUM - VOTER pools
-   */
-  ARBITRUM_VOTER: {
-    pool0: {
-      // volatile_USDC_WETH
-      gauge: '0x002323A44DeB866E4503c2757B6598CC346C1C83',
-    },
-  },
+  // /**
+  //  * ARBITRUM - VOTER pools
+  //  */
+  // ARBITRUM_VOTER: {
+  //   pool0: {
+  //     // volatile_USDC_WETH
+  //     gauge: '0x002323A44DeB866E4503c2757B6598CC346C1C83',
+  //   },
+  // },
 
   /**
    * BSC - BLUECHIP pools

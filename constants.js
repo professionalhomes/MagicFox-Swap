@@ -40,7 +40,8 @@ module.exports = {
     proxyAdmin: '0x78AE0bACB5771E265Fe530A4EF9DDDbD3467f6eb', // still need to transfer ownership from deployer to timelocker
 
     /* ERC20 */
-    weth: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
+    wnative: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
+    wbnb: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
     usdt: '0x55d398326f99059fF775485246999027B3197955',
     usdc: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
 
@@ -80,6 +81,7 @@ module.exports = {
     proxyAdmin: '0x4d5DC125BA9a9330d983DD4C0B915Cb726D7f2D5', // still need to transfer ownership from deployer to timelocker
 
     /* ERC20 */
+    wnative: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
     weth: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
     usdt: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
     usdc: '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8',
@@ -88,5 +90,41 @@ module.exports = {
     foxLP_volatile_USDC_WETH: '0xf82C9f8EeF2f4078583a780Abd82Ff2BF342183e',
     foxLP_volatile_USDT_USDC: '0x83d91b9b0415F88192182255B239c5061445DE6D',
     foxLP_volatile_USDT_WETH: '0xd0aFBD4B188266D091A4199933E5ABf5Fe340bF4',
+  },
+
+  POLYGON: {
+    /* swap */
+    pairFactory: '0x78AE0bACB5771E265Fe530A4EF9DDDbD3467f6eb', 
+    swapRouter: '0xd0f4f8b8cEd19E82b8461ada452fF9B116E5F717', 
+    solidlyLib: '0xb241D311f1114ECb6E210c40b0F2040AC8cD485e',
+
+    /* token */
+    token: '0xe68A494F2481A936760B8adbA083F786b30fB767', 
+    veToken: '0x52Af90A31e7a5a1c66b6BAF59719d289BcfE3e3D', 
+
+    /* dao */
+    bribeFactory: '0xA1F9946f2Bbb11a0719e758693992A181e6B7723', 
+    gaugeFactory: '0x89e888B917B409d7F98251122f5240af97070849', 
+    voter: '0xb36c546050a4e421a1054EF23043AD03bd3cF3B3',
+    bluechipVoter: '0x933222F9E9c6d35EC39Eac890B480505931C93D9',
+    bluechipFeeCollector: '0xE97dCA1786Aaf17Ab4aE9c1eE78eC97881396968', 
+    lzReceiver: '0x04Ba64b35870fa9E2485dCc5970d4CcB6Ae7cdEb', 
+    lzReceiverBluechip: '0xBCFBAA9e145B5439DE8e111f3344FCeb51dd51c9', 
+
+    /* LZ */
+    lzChainId: 109,
+    lzEndpoint: '0x3c2269811836af69497E5F486A85D7316753cf62',
+
+    /* UpgradableContracts admin */
+    timelocker: '',
+    proxyAdmin: '', // still need to transfer ownership from deployer to timelocker
+
+    /* ERC20 */
+    wnative: '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
+    wmatic: '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
+    usdt: '',
+    usdc: '',
+
+    /* LPs */
   }
 };

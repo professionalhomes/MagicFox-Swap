@@ -18,7 +18,7 @@ contract PairFactory is IPairFactory {
     uint256 public degenFee;
     uint256 public ownerFee;
     uint256 public MAX_PARTNER_FEE = 5000; // 50%
-    uint256 public constant MAX_FEE = 50; // 0.50%
+    uint256 public constant MAX_FEE = 25; // 0.25%
     uint256 public constant MAX_DEGEN_FEE = 100; // 1%
 
     address public feeManager;

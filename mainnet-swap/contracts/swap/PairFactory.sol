@@ -18,7 +18,7 @@ contract PairFactory is IPairFactory {
     uint256 public degenFee;
     uint256 public ownerFee;
     uint256 public MAX_PARTNER_FEE = 5000; // 50%
-    uint256 public constant MAX_FEE = 25; // 0.25%
+    uint256 public constant MAX_FEE = 50; // 0.50%
     uint256 public constant MAX_DEGEN_FEE = 100; // 1%
 
     address public feeManager;
@@ -40,8 +40,8 @@ contract PairFactory is IPairFactory {
         isPaused = false;
         feeManager = msg.sender;
         ownerFeeHandler = msg.sender;
-        stableFee = 4; // 0.04%
-        volatileFee = 18; // 0.18%
+        stableFee = 3; // 0.03%
+        volatileFee = 24; // 0.24%
         degenFee = 100; // 1%
         ownerFee = 3000; // 30% of stable/volatileFee
     }

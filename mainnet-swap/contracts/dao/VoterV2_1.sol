@@ -56,6 +56,8 @@ contract VoterV2_1 is IVoter, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     mapping(uint => uint) public lastVoted; // nft => timestamp of last vote, to ensure one vote per epoch
     mapping(address => bool) public isGauge;
     mapping(address => bool) public isAlive;
+    mapping(uint => address[]) public gaugeVoteHistory; // nft => gauges -- all time
+    mapping(uint => mapping(address => bool)) public isGaugeVoteHistory; // hold data if nft voted for gauge at any time in history
 
     event GaugeCreated(address indexed gauge, address creator, address internal_bribe, address indexed external_bribe, address indexed pool);
     event GaugeKilled(address indexed gauge);
@@ -183,6 +185,12 @@ contract VoterV2_1 is IVoter, OwnableUpgradeable, ReentrancyGuardUpgradeable {
                 _updateFor(_gauge);
 
                 gaugeVote[_tokenId].push(_gauge);
+
+                // Save gauge addresses that NFT voted for, needed for easier claiming
+                if (isGaugeVoteHistory[_tokenId][_gauge] == false) {
+                    isGaugeVoteHistory[_tokenId][_gauge] = true;
+                    gaugeVoteHistory[_tokenId].push(_gauge);
+                }
 
                 weights[_gauge] += _gaugeWeight;
                 votes[_tokenId][_gauge] += _gaugeWeight;
@@ -523,6 +531,47 @@ contract VoterV2_1 is IVoter, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     function chainGaugesList(uint16 _chainId) external view returns(address[] memory){
         return chainGauges[_chainId];
+    }
+
+    function gaugeVoteHistoryList(uint256 _tokenId) external view returns(address[] memory){
+        return gaugeVoteHistory[_tokenId];
+    }
+
+    struct BribeData {
+        address[] rewardTokens;
+        uint256[] earned;
+    }
+
+    function bribeDataExtended(address[] memory _bribeList, uint256 tokenId)
+        external 
+        view 
+        returns(BribeData[] memory)
+    {
+        BribeData[] memory bribeList = new BribeData[](_bribeList.length);
+
+        address _bribe;
+        uint256 _rewardListLen;
+        for (uint256 i = 0; i < _bribeList.length; i++) {
+            _bribe = _bribeList[i];
+            _rewardListLen = IBribe(_bribe).rewardsListLength();
+
+            address[] memory _rewardTokens = new address[](_rewardListLen);
+            uint256[] memory _earned = new uint256[](_rewardListLen);
+
+            for (uint256 j = 0; j < _rewardListLen; j++) {
+                _rewardTokens[j] = IBribe(_bribe).rewardTokens(j);
+                if (tokenId > 0) {
+                    _earned[j] = IBribe(_bribe).earned(tokenId, _rewardTokens[j]);
+                }
+            }
+
+            bribeList[i] = BribeData({
+                rewardTokens: _rewardTokens,
+                earned: _earned
+            });
+        }
+
+        return bribeList;
     }
     
 }

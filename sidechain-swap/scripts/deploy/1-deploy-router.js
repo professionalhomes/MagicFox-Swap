@@ -5,7 +5,7 @@ async function main() {
     const ContractF = await hre.ethers.getContractFactory("Router");
     const contr = await ContractF.deploy(
         addresses.pairFactory, // factory
-        addresses.weth, // weth
+        addresses.wnative, // weth
     );
 
     await contr.deployed();

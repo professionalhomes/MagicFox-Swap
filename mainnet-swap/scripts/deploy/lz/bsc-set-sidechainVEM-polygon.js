@@ -4,11 +4,11 @@ const constants = require("../../../../constants.js");
 async function main() {
     const deployer = (await hre.ethers.getSigners())[0];
 
-    const TOKEN = await hre.ethers.getContractAt('ProxyOFT', constants.BSC.proxyOFT, deployer);
+    const VE = await hre.ethers.getContractAt('VotingEscrow', constants.BSC.veToken, deployer);
     
-    let tx = await TOKEN.setTrustedRemoteAddress(constants.ARBITRUM.lzChainId, constants.ARBITRUM.token);
+    let tx = await VE.setSidechainVEM(constants.POLYGON.lzChainId, constants.POLYGON.veToken);
     await tx.wait();
-    console.log("setTrustedRemoteAddress");
+    console.log("VE.setSidechainVEM");
 }
 
 main()

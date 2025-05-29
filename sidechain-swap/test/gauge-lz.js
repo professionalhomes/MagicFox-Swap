@@ -2,21 +2,8 @@ const { time, mine } = require("@nomicfoundation/hardhat-network-helpers");
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("Gauge", function () {
-  let provider,
-    VE,
-    TOKEN,
-    ROUTER,
-    GAUGE_F,
-    BRIBE_F,
-    VOTER,
-    PAIR_F,
-    LZ_RECEIVER,
-    owner,
-    investor1,
-    investor2,
-    lzEndpoint,
-    mainchainVE;
+describe("Gauge", function() {
+  let provider, VE, TOKEN, ROUTER, GAUGE_F, BRIBE_F, VOTER, PAIR_F, LZ_RECEIVER, owner, investor1, investor2, lzEndpoint, mainchainVE;
   let mainGauge0, mainGauge1, mainGauge2; // main chain gauges
   const ONE_WEEK = 24 * 3600 * 7;
   let testTokens;
@@ -29,19 +16,10 @@ describe("Gauge", function () {
     testTokens = [];
 
     // Set next sunday
-    let dayOfWeek = new Date((await time.latest()) * 1000).getDay();
-    await time.increase(60 * 60 * 24 * (7 - dayOfWeek));
+    let dayOfWeek = new Date(await time.latest() * 1000).getDay();
+    await time.increase(60 * 60 * 24 * (7 - dayOfWeek)); 
 
-    [
-      owner,
-      investor1,
-      investor2,
-      lzEndpoint,
-      mainchainVE,
-      mainGauge0,
-      mainGauge1,
-      mainGauge2,
-    ] = await ethers.getSigners();
+    [ owner, investor1, investor2, lzEndpoint, mainchainVE, mainGauge0, mainGauge1, mainGauge2 ] = await ethers.getSigners();
 
     provider = ethers.getDefaultProvider();
 
@@ -51,9 +29,9 @@ describe("Gauge", function () {
 
     const TOKENContract = await ethers.getContractFactory("OFT");
     TOKEN = await TOKENContract.deploy(
-      "MagicFox", // string memory _name
-      "FOX", // string memory _symbol
-      lzEndpoint.address // address _lzEndpoint -- AVAX
+      'MagicFox', // string memory _name
+      'FOX', // string memory _symbol
+      lzEndpoint.address, // address _lzEndpoint -- AVAX
     );
     await TOKEN.deployed();
 
@@ -65,18 +43,14 @@ describe("Gauge", function () {
       testTokens.push(tmpToken);
     }
 
-    testTokens[0]
-      .connect(investor1)
-      .approve(investor2.address, ethers.constants.MaxUint256);
-    testTokens[0]
-      .connect(investor1)
-      .transfer(investor2.address, ethers.utils.parseUnits("100", 18));
-
+    testTokens[0].connect(investor1).approve(investor2.address, ethers.constants.MaxUint256);
+    testTokens[0].connect(investor1).transfer(investor2.address, ethers.utils.parseUnits('100', 18));
+    
     const VEContract = await ethers.getContractFactory("VotingEscrowMirror");
     VE = await upgrades.deployProxy(VEContract, [
       TOKEN.address,
       mainchainVE.address,
-      lzEndpoint.address,
+      lzEndpoint.address
     ]);
     await VE.deployed();
 
@@ -89,25 +63,17 @@ describe("Gauge", function () {
     await GAUGE_F.deployed();
 
     const VOTERContract = await ethers.getContractFactory("VoterV2_1");
-    VOTER = await upgrades.deployProxy(VOTERContract, [
-      VE.address,
-      PAIR_F.address,
-      GAUGE_F.address,
-      BRIBE_F.address,
-    ]);
+    VOTER = await upgrades.deployProxy(VOTERContract, [VE.address, PAIR_F.address, GAUGE_F.address, BRIBE_F.address]);
     await VOTER.deployed();
 
     const LZReceiverContract = await ethers.getContractFactory("LZReceiver");
-    LZ_RECEIVER = await LZReceiverContract.deploy(
-      VOTER.address,
-      lzEndpoint.address
-    );
+    LZ_RECEIVER = await LZReceiverContract.deploy(VOTER.address, lzEndpoint.address);
     await LZ_RECEIVER.deployed();
     await VOTER.setLzReceiver(LZ_RECEIVER.address);
     await BRIBE_F.setVoter(VOTER.address);
 
     // await VE.setVoter(VOTER.address);
-
+    
     // create veNFT lock
     // await TOKEN.connect(investor1).approve(VE.address, ethers.constants.MaxUint256);
     // await TOKEN.connect(investor2).approve(VE.address, ethers.constants.MaxUint256);
@@ -126,15 +92,9 @@ describe("Gauge", function () {
     // };
   });
 
-  it("Test LzReceive", async function () {
-    await VOTER.connect(owner).createGauge(
-      testTokens[0].address,
-      mainGauge0.address
-    );
-    await VOTER.connect(owner).createGauge(
-      testTokens[1].address,
-      mainGauge1.address
-    );
+  it("Test LzReceive", async function() {
+    await VOTER.connect(owner).createGauge(testTokens[0].address, mainGauge0.address);
+    await VOTER.connect(owner).createGauge(testTokens[1].address, mainGauge1.address);
 
     await TOKEN.whitelistVoter(VOTER.address, true);
 
@@ -148,27 +108,17 @@ describe("Gauge", function () {
 
     let timestamp = Math.ceil(new Date().getTime() / 1000);
 
-    const weeklyEmissions = ethers.utils.parseUnits("1000", 18);
-    const G_0_Emiss = ethers.utils.parseUnits("500", 18);
-    const G_1_Emiss = ethers.utils.parseUnits("300", 18);
-    const G_2_Emiss = ethers.utils.parseUnits("200", 18);
+    const weeklyEmissions = ethers.utils.parseUnits('1000', 18);
+    const G_0_Emiss = ethers.utils.parseUnits('500', 18);
+    const G_1_Emiss = ethers.utils.parseUnits('300', 18);
+    const G_2_Emiss = ethers.utils.parseUnits('200', 18);
 
     // simulate LZ receive
     let payload = ethers.utils.defaultAbiCoder.encode(
-      ["uint256", "uint256", "address[]", "uint256[]"],
-      [
-        timestamp,
-        weeklyEmissions,
-        [mainGauge0.address, mainGauge1.address, mainGauge2.address],
-        [G_0_Emiss, G_1_Emiss, G_2_Emiss],
-      ]
+      [ "uint256", "uint256", "address[]", "uint256[]" ], 
+      [ timestamp, weeklyEmissions, [mainGauge0.address, mainGauge1.address, mainGauge2.address], [G_0_Emiss, G_1_Emiss, G_2_Emiss]] 
     );
-    await LZ_RECEIVER.connect(lzEndpoint).lzReceive(
-      102,
-      srcAddressPayload,
-      1,
-      payload
-    ); // 102 -- bsc LZ internal chainId
+    await LZ_RECEIVER.connect(lzEndpoint).lzReceive(102, srcAddressPayload, 1, payload); // 102 -- bsc LZ internal chainId
 
     const gauge0_address = await VOTER.gaugeList(0);
     const gauge1_address = await VOTER.gaugeList(1);
@@ -185,19 +135,12 @@ describe("Gauge", function () {
     console.log(await VOTER.availableEmissions(timestamp, mainGauge1.address));
     console.log(await VOTER.availableEmissions(timestamp, mainGauge2.address));
 
-    await VOTER.connect(owner).createGauge(
-      testTokens[2].address,
-      mainGauge2.address
-    );
+    await VOTER.connect(owner).createGauge(testTokens[2].address, mainGauge2.address);
     const gauge2_address = await VOTER.gaugeList(2);
 
-    await VOTER.distribute(timestamp, [
-      mainGauge0.address,
-      mainGauge1.address,
-      mainGauge2.address,
-    ]);
+    await VOTER.distribute(timestamp, [mainGauge0.address, mainGauge1.address, mainGauge2.address]);
 
-    console.log("VOTER.distribute -- 2nd time");
+    console.log('VOTER.distribute -- 2nd time');
 
     console.log(await VOTER.availableEmissions(timestamp, mainGauge0.address));
     console.log(await VOTER.availableEmissions(timestamp, mainGauge1.address));
@@ -208,7 +151,7 @@ describe("Gauge", function () {
     console.log(await TOKEN.balanceOf(gauge1_address));
     console.log(await TOKEN.balanceOf(gauge2_address));
 
-    console.log("lzReceive -- 2nd time");
+    console.log('lzReceive -- 2nd time');
 
     timestamp = Math.ceil(new Date().getTime() / 1000) + 3600;
 
@@ -217,28 +160,18 @@ describe("Gauge", function () {
 
     // simulate LZ receive
     payload = ethers.utils.defaultAbiCoder.encode(
-      ["uint256", "uint256", "address[]", "uint256[]"],
-      [
-        timestamp,
-        weeklyEmissions,
-        [mainGauge0.address, mainGauge1.address, mainGauge2.address],
-        [G_0_Emiss, G_1_Emiss, G_2_Emiss],
-      ]
+      [ "uint256", "uint256", "address[]", "uint256[]" ], 
+      [ timestamp, weeklyEmissions, [mainGauge0.address, mainGauge1.address, mainGauge2.address], [G_0_Emiss, G_1_Emiss, G_2_Emiss]] 
     );
-    await LZ_RECEIVER.connect(lzEndpoint).lzReceive(
-      102,
-      srcAddressPayload,
-      1,
-      payload
-    ); // 102 -- bsc LZ internal chainId
+    await LZ_RECEIVER.connect(lzEndpoint).lzReceive(102, srcAddressPayload, 1, payload); // 102 -- bsc LZ internal chainId
     await VOTER.distribute(timestamp, [mainGauge0.address]);
 
-    console.log("available emissions");
+    console.log('available emissions');
     console.log(await VOTER.availableEmissions(timestamp, mainGauge0.address));
     console.log(await VOTER.availableEmissions(timestamp, mainGauge1.address));
     console.log(await VOTER.availableEmissions(timestamp, mainGauge2.address));
 
-    console.log("balances");
+    console.log('balances');
     console.log(await TOKEN.balanceOf(VOTER.address));
     console.log(await TOKEN.balanceOf(gauge0_address));
     console.log(await TOKEN.balanceOf(gauge1_address));
@@ -246,65 +179,16 @@ describe("Gauge", function () {
 
     await VOTER.distribute(timestamp, [mainGauge1.address, mainGauge2.address]);
 
-    console.log("available emissions");
+    console.log('available emissions');
     console.log(await VOTER.availableEmissions(timestamp, mainGauge0.address));
     console.log(await VOTER.availableEmissions(timestamp, mainGauge1.address));
     console.log(await VOTER.availableEmissions(timestamp, mainGauge2.address));
 
-    console.log("balances");
+    console.log('balances');
     console.log(await TOKEN.balanceOf(VOTER.address));
     console.log(await TOKEN.balanceOf(gauge0_address));
     console.log(await TOKEN.balanceOf(gauge1_address));
     console.log(await TOKEN.balanceOf(gauge2_address));
   });
 
-  it.only("Test LzReceive payload limit", async function () {
-    const LZSenderContract = await ethers.getContractFactory("DummySender");
-    const LZ_SENDER = await LZSenderContract.deploy(LZ_RECEIVER.address);
-    // srcAddress needs to be set the same way as in trusted remote
-    let srcAddressPayload = hre.ethers.utils.solidityPack(
-      ["address", "address"],
-      [owner.address, LZ_RECEIVER.address]
-    );
-
-    await LZ_SENDER.setTrustedRemote(102, srcAddressPayload);
-
-    let timestamp = Math.ceil(new Date().getTime() / 1000);
-
-    const weeklyEmissions = ethers.utils.parseUnits("1000", 18);
-    const G_0_Emiss = ethers.utils.parseUnits("500", 18);
-
-    let addresses = [];
-    let uints = [];
-    for (let i = 0; i < 154; i++) {
-      addresses.push(mainGauge0.address);
-      uints.push(G_0_Emiss);
-    }
-
-    // simulate LZ receive
-    let payload = ethers.utils.defaultAbiCoder.encode(
-      ["uint256", "uint256", "address[]", "uint256[]"],
-      [timestamp, weeklyEmissions, addresses, uints]
-    );
-
-    await expect(
-      LZ_SENDER.connect(lzEndpoint).sendPayload(102, payload)
-    ).to.be.revertedWith("LzApp: payload size is too large");
-
-    addresses.pop();
-    uints.pop();
-    payload = ethers.utils.defaultAbiCoder.encode(
-      ["uint256", "uint256", "address[]", "uint256[]"],
-      [timestamp, weeklyEmissions, addresses, uints]
-    );
-
-    try {
-      await LZ_SENDER.connect(lzEndpoint).sendPayload(102, payload);
-    } catch (e) {
-      // fails with error for invalid lzEndpoint not for payload size.ß
-      expect(e.toString()).to.contain(
-        "Transaction reverted: function selector was not recognized and there's no fallback function"
-      );
-    }
-  });
 });

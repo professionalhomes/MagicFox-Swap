@@ -6,11 +6,11 @@ async function main() {
     const contr = await ContractF.deploy(
         addresses.token,
         addresses.veToken,
-        addresses.token, // addresses.shroom,
-        addresses.veToken, // addresses.veShroom,
+        addresses.shroom,
+        addresses.veShroom,
         addresses.usdc, // '0x40E7f9B2f080567c41667E0648BA870a85797694', // Use fake usdc for testing -- addresses.usdc, -- SALE_TOKEN
-        1682598000, // START_TIME
-        1682898000, // END_TIME
+        1683554400, // START_TIME
+        1684764000, // END_TIME
         addresses.treasury, // treasury
         addresses.fairlaunchZap, // treasury
     );

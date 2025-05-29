@@ -3,7 +3,10 @@ const hre = require("hardhat");
 async function main() {
     const addresses = hre.network.config.constants;
     const ContractF = await hre.ethers.getContractFactory("FairlaunchZap");
-    const contr = await ContractF.deploy();
+    const contr = await ContractF.deploy(
+        addresses.wnative,
+        addresses.usdc,
+    );
 
     await contr.deployed();
 

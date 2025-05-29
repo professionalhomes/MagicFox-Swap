@@ -279,8 +279,8 @@ contract Fairlaunch is Ownable, ReentrancyGuard {
   }
 
   function setLpTokens(address _foxLpToken, address _shroomLpToken) external onlyOwner {
-    require(_foxLpToken != address(0), "Zero address not allowed.");
-    require(_shroomLpToken != address(0), "Zero address not allowed.");
+    require(_foxLpToken != address(0), "Zero address not allowed");
+    require(_shroomLpToken != address(0), "Zero address not allowed");
     FOX_LP_TOKEN = _foxLpToken;
     SHROOM_LP_TOKEN = _shroomLpToken;
   }

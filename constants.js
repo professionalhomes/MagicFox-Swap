@@ -20,6 +20,7 @@ module.exports = {
     /* chainlink */
     chainlinkEpochController: '0x18aC685D8D40eCBA614dcae0EBc35313DFD2eD84',
     chainlinkWeeklyEmissionBridge: '0x23078c78E09A9abC3C44f9b457cD98D0E5Ea3491',
+    chainlinkFeeDistributor: '0x86068E2ca28a4F3eEDc63A2bCa14cC131Db1FF41',
 
     /* dao */
     bribeFactory: '0xAa3e74d0729227a232e198C98Dfd5ab813b23b37', 
@@ -28,7 +29,7 @@ module.exports = {
     bluechipVoter: '0xE97dCA1786Aaf17Ab4aE9c1eE78eC97881396968',  // !!!! VERIFY IN CODE HARD-CODED LZ ENDPOINT ADDRESS !!!!
     bluechipFeeCollector: '0x19202546c2A6ee04bf13883eCc87f678DcE618Cf', 
     rewardDistributorToken: '0xB420D9C0993B23D650C66F9FeAEb760104E8058B', 
-    rewardDistributorUsdc: '', 
+    rewardDistributorUsdc: '0x813919A3Ce8c81d7b764022895a956D162a5BB29', 
     minter: '0x933222F9E9c6d35EC39Eac890B480505931C93D9', 
 
     /* LZ */

@@ -1,17 +1,19 @@
 const hre = require("hardhat");
 
 async function main() {
-    const addresses = hre.network.config.constants;
-    const ContractF = await hre.ethers.getContractFactory("OFT");
-    const contr = await ContractF.deploy(
-        'Phil', // string memory _name
-        'PH', // string memory _symbol
-        addresses.lzEndpoint, // address _lzEndpoint
-    );
+    console.log("BEFORE DEPLOYING TOKEN, MAKE SURE ARBITRUM FEE IN FIXED ON FACTORY !!!");
 
-    await contr.deployed();
+    // const addresses = hre.network.config.constants;
+    // const ContractF = await hre.ethers.getContractFactory("OFT");
+    // const contr = await ContractF.deploy(
+    //     'Phil', // string memory _name
+    //     'PH', // string memory _symbol
+    //     addresses.lzEndpoint, // address _lzEndpoint
+    // );
 
-    console.log("OFT deployed to: %saddress/%s", hre.network.config.explorer, contr.address);
+    // await contr.deployed();
+
+    // console.log("OFT deployed to: %saddress/%s", hre.network.config.explorer, contr.address);
 }
 
 main()

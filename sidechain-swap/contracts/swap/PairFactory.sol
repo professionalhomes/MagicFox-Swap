@@ -40,8 +40,8 @@ contract PairFactory is IPairFactory {
         isPaused = false;
         feeManager = msg.sender;
         ownerFeeHandler = msg.sender;
-        stableFee = 4; // 0.04%
-        volatileFee = 18; // 0.18%
+        stableFee = 3; // 0.03%
+        volatileFee = 24; // 0.24%
         degenFee = 100; // 1%
         ownerFee = 3000; // 30% of stable/volatileFee
     }

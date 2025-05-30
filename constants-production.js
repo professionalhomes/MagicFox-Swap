@@ -54,8 +54,8 @@ module.exports = {
 
   ARBITRUM: {
     /* swap */
-    pairFactory: '', 
-    swapRouter: '', 
+    pairFactory: '0xfB7919F2a30Ebdd4167097A253EE1eD3F308cF19', 
+    swapRouter: '0xf4850d24f75EbDFfC96543C11243108C7c150230', 
     solidlyLib: '',
 
     /* token */
@@ -80,9 +80,46 @@ module.exports = {
     proxyAdmin: '', // still need to transfer ownership from deployer to timelocker
 
     /* ERC20 */
+    wnative: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
     weth: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
     usdt: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
     usdc: '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8',
+
+    /* LPs */
+  },
+
+  POLYGON: {
+    /* swap */
+    pairFactory: '0xfB7919F2a30Ebdd4167097A253EE1eD3F308cF19', 
+    swapRouter: '0xf4850d24f75EbDFfC96543C11243108C7c150230', 
+    solidlyLib: '',
+
+    /* token */
+    token: '', 
+    veToken: '', 
+
+    /* dao */
+    bribeFactory: '', 
+    gaugeFactory: '', 
+    voter: '',
+    bluechipVoter: '',
+    bluechipFeeCollector: '', 
+    lzReceiver: '', 
+    lzReceiverBluechip: '', 
+
+    /* LZ */
+    lzChainId: 109,
+    lzEndpoint: '0x3c2269811836af69497E5F486A85D7316753cf62',
+
+    /* UpgradableContracts admin */
+    timelocker: '',
+    proxyAdmin: '', // still need to transfer ownership from deployer to timelocker
+
+    /* ERC20 */
+    wnative: '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
+    wmatic: '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
+    usdt: '',
+    usdc: '',
 
     /* LPs */
   }

@@ -396,6 +396,7 @@ contract VoterV2_1 is IVoter, OwnableUpgradeable, ReentrancyGuardUpgradeable {
 
     function distributeSidechain(uint16 chainId, uint256 period, uint256 dstGasLimit, uint256 from, uint256 to) public payable nonReentrant {
         require(chainId > 0, "invalid chainId");
+        require(sidechainManager[chainId] != address(0), "sidechainManager not set");
         address _gauge;
         uint256 _totalClaimable;
         uint256 gaugesToProcess = to - from;
@@ -496,8 +497,8 @@ contract VoterV2_1 is IVoter, OwnableUpgradeable, ReentrancyGuardUpgradeable {
         require(isAlive[_gauge], "gauge already dead");
         isAlive[_gauge] = false;
         claimable[_gauge] = 0;
-        internal_bribes[_gauge] = address(0);
-        external_bribes[_gauge] = address(0);
+        // internal_bribes[_gauge] = address(0); -- removed this to prevent NFT stuck in killed gauge
+        // external_bribes[_gauge] = address(0); -- removed this to prevent NFT stuck in killed gauge
         poolForGauge[_gauge] = address(0);
         isGauge[_gauge] = false;
         isAlive[_gauge] = false;

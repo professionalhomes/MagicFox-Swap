@@ -20,6 +20,7 @@ module.exports = {
     /* chainlink */
     chainlinkEpochController: '0x18aC685D8D40eCBA614dcae0EBc35313DFD2eD84',
     chainlinkWeeklyEmissionBridge: '0x23078c78E09A9abC3C44f9b457cD98D0E5Ea3491',
+    chainlinkFeeDistributor: '0x86068E2ca28a4F3eEDc63A2bCa14cC131Db1FF41',
 
     /* dao */
     bribeFactory: '0xAa3e74d0729227a232e198C98Dfd5ab813b23b37', 

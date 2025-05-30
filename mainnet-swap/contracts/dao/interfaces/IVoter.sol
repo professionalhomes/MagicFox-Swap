@@ -24,5 +24,7 @@ interface IVoter {
     function gaugeVote(uint id, uint _index) external view returns(address _pair);
     function votes(uint id, address _pool) external view returns(uint votes);
     function gaugeVoteLength(uint tokenId) external view returns(uint);
+    function length() external view returns (uint);
+    function gaugeList(uint _index) external view returns (address);
     
 }

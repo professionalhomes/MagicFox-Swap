@@ -127,5 +127,8 @@ module.exports = {
     usdc: '',
 
     /* LPs */
+    foxLP_volatile_WMATIC_USDC: '0x57123E948fFF842FF29f6B90067A17993e449883',
+    foxLP_volatile_PH_WMATIC: '0xDd04b7BE27A29cB8aeab213386Aa09b37136Eb1c',
+    foxLP_volatile_WMATIC_USDT: '0x6f45373D4c792124792032253db61916DE979Eff',
   }
 };

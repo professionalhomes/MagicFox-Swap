@@ -140,17 +140,49 @@ contract FeeCollector is AutomationCompatibleInterface, OwnableUpgradeable {
     for (uint8 i = 0; i < _tokens.length; i++) {
       if (_tokens[i] != address(0)) {
         uint256 balance = IERC20(_tokens[i]).balanceOf(address(this));
-        if (balance > 0){
-          uint[] memory amounts = router.getAmountsOut(balance, routes[_tokens[i]]);
-          uint amountOutMin = amounts[amounts.length - 1];
-          router.swapExactTokensForTokens(balance, amountOutMin, routes[_tokens[i]], address(this), block.timestamp);
+        if (balance > 0) {
+          try router.getAmountsOut(balance, routes[_tokens[i]]) returns (uint[] memory amounts) { 
+            uint amountOutMin = amounts[amounts.length - 1];
+            try router.swapExactTokensForTokens(balance, amountOutMin, routes[_tokens[i]], address(this), block.timestamp) {
+              emit Trade(tokens[i], balance);
+            } catch Error(string memory reason) {
+              // catch failing revert() and require()
+              emit Error(tokens[i], balance, bytes(reason));
+            } catch (bytes memory reason) {
+                // catch failing assert()
+              emit Error(tokens[i], balance, reason);
+            }
+          } catch Error(string memory reason) {
+
+            console.log("here2");  
+            // catch failing revert() and require()
+            emit Error(tokens[i], balance, bytes(reason));
+          } catch (bytes memory reason) {
+              // catch failing assert()
+            emit Error(tokens[i], balance, reason);
+          }
         }
       } else {
         uint256 balance = address(this).balance;
-        if (balance > 0){
-          uint[] memory amounts = router.getAmountsOut(balance, routes[_tokens[i]]);
-          uint amountOutMin = amounts[amounts.length - 1];
-          router.swapExactETHForTokens{value:balance}(amountOutMin, routes[_tokens[i]], address(this), block.timestamp);
+        if (balance > 0) { 
+          try router.getAmountsOut(balance, routes[_tokens[i]]) returns (uint[] memory amounts) { 
+            uint amountOutMin = amounts[amounts.length - 1];
+            try router.swapExactETHForTokens{value:balance}(amountOutMin, routes[_tokens[i]], address(this), block.timestamp) {
+              emit Trade(tokens[i], balance);
+            } catch Error(string memory reason) {
+              // catch failing revert() and require()
+              emit Error(tokens[i], balance, bytes(reason));
+            } catch (bytes memory reason) {
+                // catch failing assert()
+              emit Error(tokens[i], balance, reason);
+            }
+          } catch Error(string memory reason) {
+            // catch failing revert() and require()
+            emit Error(tokens[i], balance, bytes(reason));
+          } catch (bytes memory reason) {
+              // catch failing assert()
+            emit Error(tokens[i], balance, reason);
+          }
         }
       }
     }

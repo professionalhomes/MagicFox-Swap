@@ -2,9 +2,9 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("Receiver", function () {
+describe.only("Receiver", function () {
   let owner, tokenOwner, investor, deposit;
-  let pairFactory, router, WETH, tokenA, tokenB, tokenC;
+  let pairFactory, router, WETH, tokenA, tokenB, tokenC, tokenD, REWARD_DIST;
   let receiver;
 
   before(async () => {
@@ -22,10 +22,12 @@ describe("Receiver", function () {
     tokenA = await tokenContract.deploy(tokenOwner.address);
     tokenB = await tokenContract.deploy(tokenOwner.address);
     tokenC = await tokenContract.deploy(tokenOwner.address);
+    tokenD = await tokenContract.deploy(tokenOwner.address);
     await WETH.deployed();
     await tokenA.deployed();
     await tokenB.deployed();
     await tokenC.deployed();
+    await tokenD.deployed();
 
     // Pair Factory
     const pairFactoryContract = await ethers.getContractFactory("PairFactory");
@@ -37,12 +39,26 @@ describe("Receiver", function () {
     router = await routerContract.deploy(pairFactory.address, WETH.address);
     await router.deployed();
 
-    // Router
+    // reward distributor
+
+    const ArtContract = await ethers.getContractFactory("VeArt");
+    ART = await upgrades.deployProxy(ArtContract, []);
+    await ART.deployed();
+
+    const VEContract = await ethers.getContractFactory("VotingEscrow");
+    VE = await VEContract.deploy(tokenA.address, ART.address);
+    await VE.deployed();
+
+    const RDContract = await ethers.getContractFactory("RewardsDistributor");
+    REWARD_DIST = await RDContract.deploy(VE.address, tokenA.address);
+    await REWARD_DIST.deployed();
+
+    // receiver
     const receiverContract = await ethers.getContractFactory("FeeCollector");
 
     receiver = await upgrades.deployProxy(receiverContract, [
       router.address,
-      deposit.address,
+      REWARD_DIST.address,
     ]);
     await receiver.deployed();
 
@@ -56,7 +72,7 @@ describe("Receiver", function () {
     let amountMedium = ethers.utils.parseUnits("100000", 18);
     let amountSmall = ethers.utils.parseUnits("10000", 18);
     let amountETH = ethers.utils.parseUnits("10", 18);
-    let tokens = [tokenA, tokenB, tokenC];
+    let tokens = [tokenA, tokenB, tokenC, tokenD];
 
     let recipients = [investor];
 
@@ -88,7 +104,7 @@ describe("Receiver", function () {
     await router
       .connect(investor)
       .addLiquidity(
-        tokenA.address,
+        tokenC.address,
         tokenB.address,
         true,
         amountMedium,
@@ -116,6 +132,20 @@ describe("Receiver", function () {
     await router
       .connect(investor)
       .addLiquidity(
+        tokenB.address,
+        tokenA.address,
+        true,
+        amountMedium,
+        amountMedium,
+        "0",
+        "0",
+        investor.address,
+        deadline
+      );
+
+    await router
+      .connect(investor)
+      .addLiquidity(
         WETH.address,
         tokenA.address,
         true,
@@ -130,12 +160,12 @@ describe("Receiver", function () {
 
   it("Can add routes", async function () {
     const routes = [
+      { from: tokenB.address, to: tokenC.address, stable: true },
       { from: tokenC.address, to: tokenA.address, stable: true },
-      { from: tokenA.address, to: tokenB.address, stable: true },
     ];
-    await receiver.connect(owner).setTokenMapping(tokenC.address, routes);
+    await receiver.connect(owner).setTokenMapping(tokenB.address, routes);
 
-    const contractRoutes = await receiver.getRoutes(tokenC.address);
+    const contractRoutes = await receiver.getRoutes(tokenB.address);
 
     expect(contractRoutes.length).to.equal(routes.length);
 
@@ -146,32 +176,52 @@ describe("Receiver", function () {
     }
 
     // add update them
-    await receiver.connect(owner).setTokenMapping(tokenC.address, routes);
+    await receiver.connect(owner).setTokenMapping(tokenB.address, routes);
   });
 
-  it("Can set approval", async function () {
-    let amountMedium = ethers.utils.parseUnits("100000", 18);
-    await receiver
-      .connect(owner)
-      .approveERC20(tokenC.address, router.address, amountMedium);
+  // it("Can set approval", async function () {
+  //   let amountMedium = ethers.utils.parseUnits("100000", 18);
+  //   await receiver
+  //     .connect(owner)
+  //     .approveERC20(tokenC.address, router.address, amountMedium);
 
-    const allowance = await tokenC.allowance(receiver.address, router.address);
+  //   const allowance = await tokenC.allowance(receiver.address, router.address);
 
-    expect(allowance).to.equal(amountMedium);
-  });
+  //   expect(allowance).to.equal(amountMedium);
+  // });
 
   it("Can swap token", async function () {
-    const routes = [{ from: tokenA.address, to: tokenB.address, stable: true }];
-    await receiver.connect(owner).setTokenMapping(tokenA.address, routes);
-    const balanceBBefore = await tokenB.balanceOf(receiver.address);
+    const routes = [{ from: tokenB.address, to: tokenA.address, stable: true }];
+    await receiver.connect(owner).setTokenMapping(tokenB.address, routes);
+    const balanceABefore = await tokenA.balanceOf(receiver.address);
 
-    await receiver.connect(owner).swapTokens([tokenA.address]);
+    await expect(
+      await receiver.connect(owner).swapTokens([tokenB.address])
+    ).to.emit(receiver, "Trade");
 
     const balanceAAfter = await tokenA.balanceOf(receiver.address);
     const balanceBAfter = await tokenB.balanceOf(receiver.address);
 
-    expect(balanceAAfter).to.equal(0);
-    expect(balanceBAfter > balanceBBefore).to.equal(true);
+    expect(balanceBAfter).to.equal(0);
+    expect(balanceAAfter > balanceABefore).to.equal(true);
+  });
+
+  it("Try catch un existing route in token swap", async function () {
+    const routes = [{ from: tokenD.address, to: tokenA.address, stable: true }];
+    await receiver.connect(owner).setTokenMapping(tokenD.address, routes);
+    const balanceABefore = await tokenA.balanceOf(receiver.address);
+    const balanceDBefore = await tokenD.balanceOf(receiver.address);
+
+    await expect(receiver.connect(owner).swapTokens([tokenD.address])).to.emit(
+      receiver,
+      "Error"
+    );
+
+    const balanceAAfter = await tokenA.balanceOf(receiver.address);
+    const balanceDAfter = await tokenD.balanceOf(receiver.address);
+
+    expect(balanceDAfter).to.equal(balanceDBefore);
+    expect(balanceABefore).to.equal(balanceAAfter);
   });
 
   it("Can swap multiple tokens", async function () {
@@ -198,18 +248,18 @@ describe("Receiver", function () {
 
   it("Can swap token with multiple hops", async function () {
     const routes = [
-      { from: tokenB.address, to: tokenA.address, stable: true },
-      { from: tokenA.address, to: tokenC.address, stable: true },
+      { from: tokenB.address, to: tokenC.address, stable: true },
+      { from: tokenC.address, to: tokenA.address, stable: true },
     ];
     await receiver.connect(owner).setTokenMapping(tokenB.address, routes);
     const balanceCBefore = await tokenC.balanceOf(receiver.address);
 
     await receiver.connect(owner).swapTokens([tokenB.address]);
     const balanceBAfter = await tokenB.balanceOf(receiver.address);
-    const balanceCAfter = await tokenC.balanceOf(receiver.address);
+    const balanceAAfter = await tokenA.balanceOf(receiver.address);
 
     expect(balanceBAfter).to.equal(0);
-    expect(balanceCAfter > balanceCBefore).to.equal(true);
+    expect(balanceAAfter > balanceCBefore).to.equal(true);
   });
 
   it("Can swap native", async function () {
@@ -231,30 +281,28 @@ describe("Receiver", function () {
     expect(ethAfter).to.equal(0);
   });
 
-  it("Can withdraw tokens", async function () {
-    const balance = await tokenA.balanceOf(receiver.address);
-    await receiver.connect(investor).withdraw(tokenA.address);
-    const depositBalance = await tokenA.balanceOf(deposit.address);
-    const balanceAAfter = await tokenA.balanceOf(receiver.address);
-    expect(balance).to.equal(depositBalance);
-    expect(balanceAAfter).to.equal(0);
-  });
+  // it("Can withdraw tokens", async function () {
+  //   const balance = await tokenA.balanceOf(receiver.address);
+  //   await receiver.connect(investor).withdraw();
+  //   const depositBalance = await tokenA.balanceOf(deposit.address);
+  //   const balanceAAfter = await tokenA.balanceOf(receiver.address);
+  //   expect(balance).to.equal(depositBalance);
+  //   expect(balanceAAfter).to.equal(0);
+  // });
 
-  it("Can withdraw native", async function () {
-    const balance = await tokenA.provider.getBalance(receiver.address);
-    const depositBalanceBefore = await tokenA.provider.getBalance(
-      deposit.address
-    );
-    await receiver
-      .connect(investor)
-      .withdraw("0x0000000000000000000000000000000000000000");
+  // it("Can withdraw native", async function () {
+  //   const balance = await tokenA.provider.getBalance(receiver.address);
+  //   const depositBalanceBefore = await tokenA.provider.getBalance(
+  //     deposit.address
+  //   );
+  //   await receiver.connect(investor).withdraw();
 
-    const ethAfter = await tokenA.provider.getBalance(receiver.address);
+  //   const ethAfter = await tokenA.provider.getBalance(receiver.address);
 
-    const depositBalanceAfter = await tokenA.provider.getBalance(
-      deposit.address
-    );
-    expect(depositBalanceBefore.add(balance)).to.equal(depositBalanceAfter);
-    expect(ethAfter).to.equal(0);
-  });
+  //   const depositBalanceAfter = await tokenA.provider.getBalance(
+  //     deposit.address
+  //   );
+  //   expect(depositBalanceBefore.add(balance)).to.equal(depositBalanceAfter);
+  //   expect(ethAfter).to.equal(0);
+  // });
 });

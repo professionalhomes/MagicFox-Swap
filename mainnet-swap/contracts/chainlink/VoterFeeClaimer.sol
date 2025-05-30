@@ -6,7 +6,7 @@ import "../dao/interfaces/IVoter.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 
-contract FeeDistributor is AutomationCompatibleInterface, OwnableUpgradeable  {
+contract VoterFeeClaimer is AutomationCompatibleInterface, OwnableUpgradeable  {
 
     address public automationRegistry;
 

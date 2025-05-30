@@ -1072,7 +1072,7 @@
             "label": "router",
             "offset": 0,
             "slot": "101",
-            "type": "t_contract(IRouter)1281",
+            "type": "t_contract(IRouter)25216",
             "contract": "FeeCollector",
             "src": "contracts/dao/FeeCollector.sol:14"
           },
@@ -1080,7 +1080,7 @@
             "label": "routes",
             "offset": 0,
             "slot": "102",
-            "type": "t_mapping(t_address,t_array(t_struct(route)1234_storage)dyn_storage)",
+            "type": "t_mapping(t_address,t_array(t_struct(route)25169_storage)dyn_storage)",
             "contract": "FeeCollector",
             "src": "contracts/dao/FeeCollector.sol:16"
           },
@@ -1098,7 +1098,7 @@
             "label": "address",
             "numberOfBytes": "20"
           },
-          "t_array(t_struct(route)1234_storage)dyn_storage": {
+          "t_array(t_struct(route)25169_storage)dyn_storage": {
             "label": "struct IRouter.route[]",
             "numberOfBytes": "32"
           },
@@ -1114,15 +1114,15 @@
             "label": "bool",
             "numberOfBytes": "1"
           },
-          "t_contract(IRouter)1281": {
+          "t_contract(IRouter)25216": {
             "label": "contract IRouter",
             "numberOfBytes": "20"
           },
-          "t_mapping(t_address,t_array(t_struct(route)1234_storage)dyn_storage)": {
+          "t_mapping(t_address,t_array(t_struct(route)25169_storage)dyn_storage)": {
             "label": "mapping(address => struct IRouter.route[])",
             "numberOfBytes": "32"
           },
-          "t_struct(route)1234_storage": {
+          "t_struct(route)25169_storage": {
             "label": "struct IRouter.route",
             "members": [
               {
@@ -3289,6 +3289,886 @@
           "t_mapping(t_uint256,t_mapping(t_address,t_uint256))": {
             "label": "mapping(uint256 => mapping(address => uint256))",
             "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "2f56c434c0a7796e051336a739fad39a0078919f9489ccc213888b65d3469d9b": {
+      "address": "0x11eA77e8eAE5412729D8499A2D5F6ee13Bd6d74A",
+      "txHash": "0x396b970d5728d53bb1978d67144d7fce27d22b9f1f6832f7efeb6ee62740aefc",
+      "layout": {
+        "solcVersion": "0.8.13",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "router",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_contract(IRouter)1615",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:20"
+          },
+          {
+            "label": "routes",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_mapping(t_address,t_array(t_struct(route)1568_storage)dyn_storage)",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:22"
+          },
+          {
+            "label": "receiver",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_address",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:23"
+          },
+          {
+            "label": "automationRegistry",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_address",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:24"
+          },
+          {
+            "label": "tokens",
+            "offset": 0,
+            "slot": "105",
+            "type": "t_array(t_address)dyn_storage",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:25"
+          },
+          {
+            "label": "lastTrade",
+            "offset": 0,
+            "slot": "106",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:26"
+          },
+          {
+            "label": "interval",
+            "offset": 0,
+            "slot": "107",
+            "type": "t_uint256",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:27"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(route)1568_storage)dyn_storage": {
+            "label": "struct IRouter.route[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IRouter)1615": {
+            "label": "contract IRouter",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_array(t_struct(route)1568_storage)dyn_storage)": {
+            "label": "mapping(address => struct IRouter.route[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(route)1568_storage": {
+            "label": "struct IRouter.route",
+            "members": [
+              {
+                "label": "from",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "to",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "stable",
+                "type": "t_bool",
+                "offset": 20,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "974cfbb14a51df7d3afa503d26bc5f368e97608ac0082ff5d758f90a30609147": {
+      "address": "0x4CFdFB03272525a44523097fBd62b3E6aA980CdE",
+      "txHash": "0x134ddf3cb1cd248b14fbaa7c7b01ad5ec1fa7adf9b01eb5a566f21a8817ad386",
+      "layout": {
+        "solcVersion": "0.8.13",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "router",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_contract(IRouter)1632",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:20"
+          },
+          {
+            "label": "routes",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_mapping(t_address,t_array(t_struct(route)1585_storage)dyn_storage)",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:22"
+          },
+          {
+            "label": "receiver",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_address",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:23"
+          },
+          {
+            "label": "automationRegistry",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_address",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:24"
+          },
+          {
+            "label": "tokens",
+            "offset": 0,
+            "slot": "105",
+            "type": "t_array(t_address)dyn_storage",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:25"
+          },
+          {
+            "label": "lastTrade",
+            "offset": 0,
+            "slot": "106",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:26"
+          },
+          {
+            "label": "interval",
+            "offset": 0,
+            "slot": "107",
+            "type": "t_uint256",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:27"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(route)1585_storage)dyn_storage": {
+            "label": "struct IRouter.route[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IRouter)1632": {
+            "label": "contract IRouter",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_array(t_struct(route)1585_storage)dyn_storage)": {
+            "label": "mapping(address => struct IRouter.route[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(route)1585_storage": {
+            "label": "struct IRouter.route",
+            "members": [
+              {
+                "label": "from",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "to",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "stable",
+                "type": "t_bool",
+                "offset": 20,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "bd2082dd78d3044cd9ca7f38b01c49b0feae6f720612231c0358d725a3219c8a": {
+      "address": "0xC6Cf21634Cf92244389Eb8592Aa56687e91B1F5e",
+      "txHash": "0x2185d84998d015d5830206e20e4b1bbb22ba4752fb41f11db6561c523dcc18c9",
+      "layout": {
+        "solcVersion": "0.8.13",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "router",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_contract(IRouter)1643",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:20"
+          },
+          {
+            "label": "routes",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_mapping(t_address,t_array(t_struct(route)1596_storage)dyn_storage)",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:22"
+          },
+          {
+            "label": "receiver",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_address",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:23"
+          },
+          {
+            "label": "automationRegistry",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_address",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:24"
+          },
+          {
+            "label": "tokens",
+            "offset": 0,
+            "slot": "105",
+            "type": "t_array(t_address)dyn_storage",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:25"
+          },
+          {
+            "label": "lastTrade",
+            "offset": 0,
+            "slot": "106",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:26"
+          },
+          {
+            "label": "interval",
+            "offset": 0,
+            "slot": "107",
+            "type": "t_uint256",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:27"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(route)1596_storage)dyn_storage": {
+            "label": "struct IRouter.route[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IRouter)1643": {
+            "label": "contract IRouter",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_array(t_struct(route)1596_storage)dyn_storage)": {
+            "label": "mapping(address => struct IRouter.route[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(route)1596_storage": {
+            "label": "struct IRouter.route",
+            "members": [
+              {
+                "label": "from",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "to",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "stable",
+                "type": "t_bool",
+                "offset": 20,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "65c64f8f48002500cdd0cdb4c562bfeff33832a99e55c0a9f2d837188c1dfc72": {
+      "address": "0x83B0725b7C5b4F467E149d9Bb063a9c579e7b302",
+      "txHash": "0x27d3f39b86557ef83b222b508bb15d12a6a4f57e677fcd764e04f4300a7da9c3",
+      "layout": {
+        "solcVersion": "0.8.13",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "router",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_contract(IRouter)1664",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:20"
+          },
+          {
+            "label": "routes",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_mapping(t_address,t_array(t_struct(route)1617_storage)dyn_storage)",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:22"
+          },
+          {
+            "label": "receiver",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_address",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:23"
+          },
+          {
+            "label": "automationRegistry",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_address",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:24"
+          },
+          {
+            "label": "tokens",
+            "offset": 0,
+            "slot": "105",
+            "type": "t_array(t_address)dyn_storage",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:25"
+          },
+          {
+            "label": "lastTrade",
+            "offset": 0,
+            "slot": "106",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:26"
+          },
+          {
+            "label": "interval",
+            "offset": 0,
+            "slot": "107",
+            "type": "t_uint256",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:27"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(route)1617_storage)dyn_storage": {
+            "label": "struct IRouter.route[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IRouter)1664": {
+            "label": "contract IRouter",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_array(t_struct(route)1617_storage)dyn_storage)": {
+            "label": "mapping(address => struct IRouter.route[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(route)1617_storage": {
+            "label": "struct IRouter.route",
+            "members": [
+              {
+                "label": "from",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "to",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "stable",
+                "type": "t_bool",
+                "offset": 20,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "ad051f1ea0669df773de924f76a6b4aec2e67a042a85f029052045c0bf65bda3": {
+      "address": "0x2488446F67c3b1708e7bF3b305e57fd00Aa3965a",
+      "txHash": "0xd6996d8548675fb1a23d205b5296fb61c0cbdf2e179e3c30f57b361ace7d7082",
+      "layout": {
+        "solcVersion": "0.8.13",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "router",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_contract(IRouter)1657",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:20"
+          },
+          {
+            "label": "routes",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_mapping(t_address,t_array(t_struct(route)1610_storage)dyn_storage)",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:22"
+          },
+          {
+            "label": "receiver",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_address",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:23"
+          },
+          {
+            "label": "automationRegistry",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_address",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:24"
+          },
+          {
+            "label": "tokens",
+            "offset": 0,
+            "slot": "105",
+            "type": "t_array(t_address)dyn_storage",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:25"
+          },
+          {
+            "label": "lastTrade",
+            "offset": 0,
+            "slot": "106",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:26"
+          },
+          {
+            "label": "interval",
+            "offset": 0,
+            "slot": "107",
+            "type": "t_uint256",
+            "contract": "FeeCollector",
+            "src": "contracts/chainlink/FeeCollector.sol:27"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(route)1610_storage)dyn_storage": {
+            "label": "struct IRouter.route[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_contract(IRouter)1657": {
+            "label": "contract IRouter",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_array(t_struct(route)1610_storage)dyn_storage)": {
+            "label": "mapping(address => struct IRouter.route[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(route)1610_storage": {
+            "label": "struct IRouter.route",
+            "members": [
+              {
+                "label": "from",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "to",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "stable",
+                "type": "t_bool",
+                "offset": 20,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
           },
           "t_uint256": {
             "label": "uint256",

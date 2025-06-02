@@ -2,7 +2,7 @@ const { time } = require("@nomicfoundation/hardhat-network-helpers");
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe.only("Receiver", function () {
+describe("Receiver", function () {
   let owner, tokenOwner, investor, deposit;
   let pairFactory, router, WETH, tokenA, tokenB, tokenC, tokenD, REWARD_DIST;
   let receiver;

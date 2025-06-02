@@ -9,8 +9,8 @@ async function main() {
         addresses.shroom,
         addresses.veShroom,
         addresses.usdc, // '0x40E7f9B2f080567c41667E0648BA870a85797694', // Use fake usdc for testing -- addresses.usdc, -- SALE_TOKEN
-        1683554400, // START_TIME
-        1684764000, // END_TIME
+        1685179643, // START_TIME
+        1685181600, // END_TIME
         addresses.treasury, // treasury
         addresses.fairlaunchZap, // treasury
     );

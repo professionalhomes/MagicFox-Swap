@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-import 'hardhat/console.sol';
+import "hardhat/console.sol";
 
 
 interface IERC20Ext {
@@ -82,6 +82,7 @@ contract Bribe is ReentrancyGuard {
     function addReward(address _rewardsToken) public {
         require( (msg.sender == owner || msg.sender == bribeFactory), "addReward: permission is denied!" );
         require(!isRewardToken[_rewardsToken], "Reward token already exists");
+
         isRewardToken[_rewardsToken] = true;
         rewardTokens.push(_rewardsToken);
     }
@@ -118,24 +119,23 @@ contract Bribe is ReentrancyGuard {
         uint reward = 0;
         uint256 _endTimestamp = IMinter(minter).active_period(); // claim until current epoch
         uint256 _userLastTime = userTimestamp[tokenId][_rewardToken];
-        
+
         if(_endTimestamp == _userLastTime){
             return 0;
         }
 
-        // if user first time then set it to first bribe - week to avoid any timestamp problem
-        if(_userLastTime < firstBribeTimestamp){
-            _userLastTime = firstBribeTimestamp - WEEK;
+        // if user first time then set it to firstBribe as start scan
+        if(_userLastTime == 0){
+            _userLastTime = firstBribeTimestamp;
         }
 
         for(k; k < 50; k++){
-            if(_userLastTime == _endTimestamp){
+            reward += _earned(tokenId, _rewardToken, _userLastTime);
+            _userLastTime = _userLastTime + WEEK;
+            if(_userLastTime >= _endTimestamp){
                 // if we reach the current epoch, exit
                 break;
             }
-            reward += _earned(tokenId, _rewardToken, _userLastTime);
-            _userLastTime += WEEK;   
-                     
         }  
         return reward;  
     }
@@ -226,7 +226,7 @@ contract Bribe is ReentrancyGuard {
 
         uint256 _startTimestamp = IMinter(minter).active_period() + WEEK; //period points to the current thursday. Bribes are distributed from next epoch (thursday)
         if(firstBribeTimestamp == 0){
-            //_startTimestamp = (block.timestamp / WEEK * WEEK) + WEEK; //if first then save current thursday
+            _startTimestamp = (block.timestamp / WEEK * WEEK) + WEEK; //if first then save current thursday
             firstBribeTimestamp = _startTimestamp;
         }
 

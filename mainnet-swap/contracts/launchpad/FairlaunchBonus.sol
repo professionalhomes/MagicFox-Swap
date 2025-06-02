@@ -55,6 +55,7 @@ contract FairlaunchBonus is Ownable, ReentrancyGuard {
   /****************** EVENTS ******************/
   /********************************************/
   event BonusLock(address indexed user, uint256 veFoxAmount, uint256 veShroomAmount);
+  event BonusUpdated(uint256 bonus);
 
   /**
    * @dev Lock with bonus
@@ -83,12 +84,22 @@ contract FairlaunchBonus is Ownable, ReentrancyGuard {
 
     // send SHROOM and lock veSHROOM
     if(veShroomAmount > 0) {
-      uint256 veFoxBonus = veShroomAmount.mul(bonus).div(100);
-      SHROOM.safeTransferFrom(treasury, address(this), veFoxBonus);
+      uint256 veShroomBonus = veShroomAmount.mul(bonus).div(100);
+      SHROOM.safeTransferFrom(treasury, address(this), veShroomBonus);
       veShroomAmount = SHROOM.balanceOf(address(this));
       VE_SHROOM.deposit_for(veShroomTokenId, veShroomAmount);
     }
 
     emit BonusLock(msg.sender, veFoxAmount, veShroomAmount);
   }
+
+  function setBonus(uint8 _bonus)
+    external
+    onlyOwner()
+  {
+    require(_bonus >= 0 && _bonus <= 100, "bonus can be in range 0 - 100");
+    bonus = _bonus;
+    emit BonusUpdated(bonus);
+  }
+
 }

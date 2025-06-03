@@ -43,7 +43,7 @@ contract PairFactory is IPairFactory {
         stableFee = 3; // 0.03%
         volatileFee = 24; // 0.24%
         degenFee = 100; // 1%
-        ownerFee = 3000; // 30% of stable/volatileFee
+        ownerFee = 5000; // 50% of stable/volatileFee
     }
 
     function allPairsLength() external view returns (uint) {
@@ -72,7 +72,7 @@ contract PairFactory is IPairFactory {
 
     function setOwnerFee(uint256 _newFee) external {
         require(msg.sender == feeManager, 'not fee manager');
-        require(_newFee <= 3000);
+        require(_newFee <= 5000);
         ownerFee = _newFee;
     }
 

@@ -39,8 +39,6 @@ describe("Receiver", function () {
     router = await routerContract.deploy(pairFactory.address, WETH.address);
     await router.deployed();
 
-    // reward distributor
-
     const ArtContract = await ethers.getContractFactory("VeArt");
     ART = await upgrades.deployProxy(ArtContract, []);
     await ART.deployed();

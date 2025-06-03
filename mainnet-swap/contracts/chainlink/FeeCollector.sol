@@ -127,6 +127,11 @@ contract FeeCollector is AutomationCompatibleInterface, OwnableUpgradeable {
     tokens.push(_token);
   }
 
+  function setRouter(address _router) external onlyOwner {
+    require(_router != address(0));
+    router = IRouter(_router);
+  }
+
   // function approveERC20(address _token, uint256 _amount)
   //   external
   //   onlyOwner()

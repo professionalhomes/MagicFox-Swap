@@ -7,8 +7,8 @@ const pools = require("../../../../pools.js");
 
 async function main() {
     
-    const POOL_LP = addresses.foxLP_volatile_USDT_WETH;
-    const MAINCHAIN_GAUGE = pools.BSC_BLUECHIP.pool3;
+    const POOL_LP = addresses.vAMM_IBEX_USDC;
+    const MAINCHAIN_GAUGE = pools.BSC_VOTER.pool10;
 
     /* !!! Don't change the code below !!! */
     /* !!! Don't change the code below !!! */
@@ -16,7 +16,7 @@ async function main() {
 
     const PID = scriptName.split('-')[0];
     const deployer = (await hre.ethers.getSigners())[0];
-    const VOTER = await hre.ethers.getContractAt('BluechipVoter', addresses.bluechipVoter, deployer);
+    const VOTER = await hre.ethers.getContractAt('VoterV2_1', addresses.voter, deployer);
     const poolLength = await VOTER.length();
 
     console.log(`Add gauge: ${scriptName}`);

@@ -8,7 +8,7 @@ async function main() {
         addresses.veToken,
         addresses.shroom,
         addresses.veShroom,
-        '0x028edcd90A788238b17959b8B43e2D157C2fB66a'
+        addresses.fairlaunchBonusTreasury
     );
 
     await contr.deployed();

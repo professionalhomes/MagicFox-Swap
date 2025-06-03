@@ -3,12 +3,11 @@ const path = require('path');
 const scriptName = path.basename(__filename);
 const addresses = hre.network.config.constants;
 const constants = require("../../../../constants.js");
-const pools = require("../../../../pools.js");
 
 async function main() {
     
-    const POOL_LP = addresses.foxLP_volatile_USDT_WETH;
-    const MAINCHAIN_GAUGE = pools.BSC_BLUECHIP.pool2;
+    const POOL_LP = addresses.foxLP_volatile_acsBNB_ACS;
+    const CHAIN_ID = 0; // 0 for BSC, otherwise set it to constants.{CHAIN}.lzChainId
 
     /* !!! Don't change the code below !!! */
     /* !!! Don't change the code below !!! */
@@ -16,15 +15,10 @@ async function main() {
 
     const PID = scriptName.split('-')[0];
     const deployer = (await hre.ethers.getSigners())[0];
-    const VOTER = await hre.ethers.getContractAt('BluechipVoter', addresses.bluechipVoter, deployer);
+    const VOTER = await hre.ethers.getContractAt('VoterV2_1', addresses.voter, deployer);
     const poolLength = await VOTER.length();
 
     console.log(`Add gauge: ${scriptName}`);
-
-    if (MAINCHAIN_GAUGE.chainId != addresses.lzChainId) {
-        console.log('INCORRECT lzChainID!');
-        return;
-    }
 
     if (poolLength != PID) {
         console.log('INCORRECT PID!');
@@ -33,7 +27,7 @@ async function main() {
         return;
     }
 
-    tx = await VOTER.createGauge(POOL_LP, MAINCHAIN_GAUGE.gauge);
+    tx = await VOTER.createGauge(POOL_LP, CHAIN_ID);
     await tx.wait();
     console.log("gauge created");
     const gauge = await VOTER.gaugeList(PID);

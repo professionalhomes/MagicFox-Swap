@@ -64,7 +64,7 @@ contract FairlaunchBonus is Ownable, ReentrancyGuard {
     IVotingEscrow.LockedBalance memory foxBalance = VE_FOX.locked(veFoxTokenId);
     IVotingEscrow.LockedBalance memory shroomBalance = VE_SHROOM.locked(veShroomTokenId);
 
-    uint unlock_time = (block.timestamp + 364 days) / WEEK * WEEK; // Locktime is rounded down to weeks
+    uint unlock_time = block.timestamp + 356 days;
     require(foxBalance.end >= unlock_time, "Lock time to low for bonus");
     require(shroomBalance.end >= unlock_time, "Lock time to low for bonus");
 

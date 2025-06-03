@@ -7,8 +7,8 @@ const pools = require("../../../../pools.js");
 
 async function main() {
     
-    const POOL_LP = addresses.foxLP_volatile_WMATIC_USDC;
-    const MAINCHAIN_GAUGE = pools.BSC_VOTER.pool5;
+    const POOL_LP = addresses.vAMM_USDC_IBEX;
+    const MAINCHAIN_GAUGE = pools.BSC_VOTER.pool18;
 
     /* !!! Don't change the code below !!! */
     /* !!! Don't change the code below !!! */

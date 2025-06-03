@@ -7,38 +7,136 @@ module.exports = {
    */
   BSC_VOTER: {
     pool0: {
-      // foxLP_volatile_USDC_WBNB
-      gauge: '0xD75Ef952786038198F416Cf312568BEda3a7ba60',
+      // foxLP_stable_bnbx_wbnb
+      gauge: '0x47B2a7B851e3a07792BC7A9c4bA53278E1B5a57a',
     },
     pool1: {
-      // foxLP_volatile_USDT_BUSD
-      gauge: '0x4B666e3Fe15fcaeE5bBaa865caf076cc6781EB20',
+      // foxLP_stable_wbnb_rbnb
+      gauge: '0xaD6F39c4659cBa35e31b25F704D91361Eb979F3b',
     },
     pool2: {
-      // foxLP_volatile_PH_WBNB -- old LP
-      gauge: '0x5D8C2F4FfFC7683dF539a9883c3e6c149A889eB1',
+      // foxLP_volatile_acsBNB_ACS
+      gauge: '0xc478B19445c8FFE2E08F750C8f743a77282EF98A',
     },
     pool3: {
-      // ARBITRUM volatile_USDC_WETH
-      gauge: '0x95B896918BF60336526883117f7461fBbb766682',
-      chainId: constants.ARBITRUM.lzChainId,
-      sideGauge: '0x002323A44DeB866E4503c2757B6598CC346C1C83',
+      // foxLP_volatile_agEUR_usdc
+      gauge: '0xf8d1405ebAA9FBaeA5e2a6b7F4F7e0Ca1e287496',
     },
     pool4: {
-      // foxLP_volatile_PH_WBNB -- NEW
-      gauge: '0x78cfF03c1e9CC21DA28859B0884E162Fc51d9e66',
+      // foxLP_stable_usdt_busd
+      gauge: '0x6fF3Ec3C27a930783Ad5e094399B8Ed5f9496Dc2',
     },
     pool5: {
-      // POLYGON volatile_WMATIC_USDC
-      chainId: constants.POLYGON.lzChainId,
-      gauge: '0xd0Aa19B90522cd94E387266539b5EbfE970e3Deb',
-      sideGauge: '0xDB225FFa9e4002ac77ae030853DbFcACbd0Af0EC',
+      // foxLP_volatile_usdt_btcb
+      gauge: '0x6Bb553183Efce37562F38A4070225212Fc653270',
     },
     pool6: {
-      // POLYGON volatile_PH_WMATIC
+      // ARBITRUM vAMM-SLIZ/slzUSDC
+      gauge: '0xF70FF7960Aff1c362ef9f992f4E67Fba452537CE',
+      chainId: constants.ARBITRUM.lzChainId,
+      sideGauge: '0x3bFe9dc076B293c712d6f53457E3ab4832F0a779',
+    },
+    pool7: {
+      // ARBITRUM sAMM-slzUSDC/USDC 
+      gauge: '0xb5d4112446462a3957C83B48693eBfbc1C9aC02C',
+      chainId: constants.ARBITRUM.lzChainId,
+      sideGauge: '0x82B53854E1dA958D78D0DC3605137aD697388bb1',
+    },
+    pool8: {
+      // ARBITRUM vAMM-ACS/WETH
+      gauge: '0xdDCAb60a0b5f21BAD6d436b4bb9276fB5f7D3E2F',
+      chainId: constants.ARBITRUM.lzChainId,
+      sideGauge: '0x2B281E4Fd8ba939756BdD5Ae836769A1c4B76AfB',
+    },
+    pool9: {
+      // ARBITRUM vAMM-IBEX/WETH
+      gauge: '0x11fa46753202591E9585957c1CcBF0F99BEDf20c',
+      chainId: constants.ARBITRUM.lzChainId,
+      sideGauge: '0x95fF2c347f9Ddb59690901e69C5e206a1ce32573',
+    },
+    pool10: {
+      // ARBITRUM vAMM-IBEX/USDC
+      gauge: '0x9d2951ed48378Cd11041c9195A2FF57819ac083D',
+      chainId: constants.ARBITRUM.lzChainId,
+      sideGauge: '0x103D3Ae5e9c305eE9e19925484bF44453C21AC61',
+    },
+    pool11: {
+      // ARBITRUM vAMM-aOpenX/ARB
+      gauge: '0x9825C1e5b5c838DfdA6eDe9BA006143353A018d8',
+      chainId: constants.ARBITRUM.lzChainId,
+      sideGauge: '0xdf684B89d65c5BB629104493b8f94CD9Ae4a9C14',
+    },
+    pool12: {
+      // ARBITRUM vAMM-agEUR/USDC
+      gauge: '0x801b17fF002e418d4aE06c62338234B6fC54CeEb',
+      chainId: constants.ARBITRUM.lzChainId,
+      sideGauge: '0xde258195e8C84711d1C515c288A7bfb03D9Ce569',
+    },
+    pool13: {
+      // ARBITRUM vAMM-L2DAO/WETH
+      gauge: '0x283ee9152F7b5b44f8024b61763137eF8C6cD34d',
+      chainId: constants.ARBITRUM.lzChainId,
+      sideGauge: '0xC011CF06F7f90F474b9e0674E1104E4D64FC8443',
+    },
+    pool14: {
+      // ARBITRUM vAMM-WBTC/USDC
+      gauge: '0x06F3a89742273713deB95A30Db7273926e1904E2',
+      chainId: constants.ARBITRUM.lzChainId,
+      sideGauge: '0x5847baaA85EB719Bdab28bb018027F339cD6D43d',
+    },
+    pool15: {
+      // ARBITRUM vAMM-WETH/ARB
+      gauge: '0x0598b23F1D3fE275DB9e675aD69CF15aD072a8eF',
+      chainId: constants.ARBITRUM.lzChainId,
+      sideGauge: '0x47456086e52765689927123f04658dc68c92520B',
+    },
+    pool16: {
+      // POLYGON sAMM_WMATIC_rMATIC
+      gauge: '0x4d6aE6219E6b9af8b8AD41f41c3584A98323f089',
       chainId: constants.POLYGON.lzChainId,
-      gauge: '0xf6149da93Aa3D34B8AD6064C64910B01D1332fFb',
-      sideGauge: '0xD9cB687c3394101F7AaDb79f2D68C751DC135ee0',
+      sideGauge: '0x70F527b20FB77c11d1548BeB83b0161d1C76312a',
+    },
+    pool17: {
+      // POLYGON sAMM_WMATIC_MaticX
+      gauge: '0x765F180b1e75da34Ed27a7652D3eE020E4bC848B',
+      chainId: constants.POLYGON.lzChainId,
+      sideGauge: '0xdBDF12f5b3E629c45C5E5Bc65793fBCE5884b8e3',
+    },
+    pool18: {
+      // POLYGON vAMM_USDC_IBEX
+      gauge: '0x6Ab3a4a893eCC200054B96E9C09E23212d8F56E4',
+      chainId: constants.POLYGON.lzChainId,
+      sideGauge: '0x39E82015B1BB56893cB82786CD4c2765611bF606',
+    },
+    pool19: {
+      // POLYGON vAMM_WMATIC_IBEX
+      gauge: '0xc27aEB25c30829Bf117cF0c14cca2cf2c7F3B28c',
+      chainId: constants.POLYGON.lzChainId,
+      sideGauge: '0x50a42A9d5b7451E19c6D537d420afd3c7096D9BC',
+    },
+    pool20: {
+      // POLYGON vAMM_USDC_agEUR
+      gauge: '0xc66CF9DD3086C44223E2764E50D633b58EA5aF80',
+      chainId: constants.POLYGON.lzChainId,
+      sideGauge: '0xd235AC1923afe8Fa9fe13dd1DCC9929077D9CC47',
+    },
+    pool21: {
+      // POLYGON vAMM_WETH_USDT
+      gauge: '0x8ee541925e041c6dff6B1fb1393359C555C270E1',
+      chainId: constants.POLYGON.lzChainId,
+      sideGauge: '0x5827E67Ad947Ba51E8Af648de63FE386Cc58a0e9',
+    },
+    pool22: {
+      // POLYGON vAMM_WBTC_WETH
+      gauge: '0x43869Ccd3ba4DCf6389B541679C233864a7c6aD9',
+      chainId: constants.POLYGON.lzChainId,
+      sideGauge: '0x614aE992b859efe5ffcEe8f04dcaa0998F326fb2',
+    },
+    pool23: {
+      // POLYGON sAMM_WMATIC_stMATIC
+      gauge: '0x60e48c925C93ad01B8f6198CAc3A8d54C662eDeA',
+      chainId: constants.POLYGON.lzChainId,
+      sideGauge: '0x077491c81319205CA7Cd61ed9751CE91276fFCFf',
     },
   },
 
@@ -47,44 +145,42 @@ module.exports = {
    */
   BSC_BLUECHIP: {
     pool0: {
-      // foxLP_stable_USDT_USDC
-      gauge: '0x768C0616dA2445cb4033400c92B6a3B9DCfc4013',
-      allocPts: 500,
+      // foxLP_volatile_usdt_wbnb
+      gauge: '0x97c93d2144521C6b834f5021b3E93e5c56B86Bc1',
+      allocPts: 0,
     },
     pool1: {
-      // ARBITRUM stable_USDC_USDT
-      gauge: '0xeDf861C221735Af71C3C00638465645A58a5405d',
-      chainId: constants.ARBITRUM.lzChainId,
-      sideGauge: '0x5b39b92328eFA9fF1Fc101d9B70f8a246C2bE892',
-      allocPts: 250,
+      // foxLP_stable_usdt_usdc
+      gauge: '0x53B3cAC5D3A63b85B04b726810255a15Eeb60a44',
+      allocPts: 0,
     },
     pool2: {
-      // ARBITRUM volatile_USDT_WETH
-      gauge: '0xD91949741f7fcfAC047F07900Ce9c2414A2D7368',
+      // ARBITRUM vAMM_WETH_USDC
+      gauge: '0xff233980047a44D5bA0DCcDaE33FEBe6Aca523B1',
       chainId: constants.ARBITRUM.lzChainId,
-      sideGauge: '',
+      sideGauge: '0xa9Ed92b6Bf0B6232D6F98fA120177A89550FC8D3',
       allocPts: 0,
     },
     pool3: {
-      // ARBITRUM volatile_USDT_WETH
-      gauge: '0xF537091fEa9E82000f08C48a82bb555310643F12',
+      // ARBITRUM sAMM_USDT_USDC
+      gauge: '0x6Ae02ff4aE055E71D1c6343FC60cE611eFcAA53E',
       chainId: constants.ARBITRUM.lzChainId,
-      sideGauge: '',
+      sideGauge: '0x52817053E8f5Dd6dc00672112cf1897c92835ef2',
       allocPts: 0,
     },
     pool4: {
-      // ARBITRUM volatile_USDT_WETH
-      chainId: constants.ARBITRUM.lzChainId,
-      gauge: '0xbd668B4e4832665E16A80A0a379CD0B87dE500Cb',
-      sideGauge: '0x59EbAc4AfA8cab728301b5733280C605640E8E88',
-      allocPts: 250,
+      // POLYGON vAMM_WMATIC_USDC
+      gauge: '0xb2b862403D587aDafD2DD98fB6202388A0bCef06',
+      chainId: constants.POLYGON.lzChainId,
+      sideGauge: '0x63b8A1BccF0dC58c61e9A77A13e96ce9E0484e36',
+      allocPts: 0,
     },
     pool5: {
-      // POLYGON volatile_WMATIC_USDT
+      // POLYGON sAMM_USDC_USDT
+      gauge: '0x98F590D08412f374AAFfd4F0F35870397F59108c',
       chainId: constants.POLYGON.lzChainId,
-      gauge: '0x6aCb815fE5ff865cfFEC4c6cf3d46E5244633844',
-      sideGauge: '0x2c7BEB38058B57730c6a735aD76CF6F78F8eF2d5',
-      allocPts: 500,
+      sideGauge: '0xeEb86A2773EadC03380D3682508eae75F4bc5366',
+      allocPts: 0,
     },
   },
 };

@@ -6,8 +6,8 @@ const constants = require("../../../../constants.js");
 
 async function main() {
     
-    const POOL_LP = hre.ethers.constants.AddressZero;
-    const CHAIN_ID = constants.ARBITRUM.lzChainId; // 0 for BSC, otherwise set it to constants.{CHAIN}.lzChainId
+    const POOL_LP = addresses.foxLP_stable_usdt_usdc;
+    const CHAIN_ID = 0; // 0 for BSC, otherwise set it to constants.{CHAIN}.lzChainId
 
     /* !!! Don't change the code below !!! */
     /* !!! Don't change the code below !!! */

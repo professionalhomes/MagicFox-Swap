@@ -5,7 +5,8 @@ async function main() {
     const FeeContract = await ethers.getContractFactory("FeeCollector");
     const FEE_COLLECTOR = await upgrades.deployProxy(FeeContract, [
         addresses.swapRouter, 
-        hre.ethers.constants.AddressZero
+        hre.ethers.constants.AddressZero,
+        addresses.usdc
     ]);
     await FEE_COLLECTOR.deployed();
 

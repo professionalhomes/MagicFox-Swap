@@ -9,18 +9,13 @@ import "../chainlink/AutomationCompatible.sol";
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-interface IRewardsDistributor {
-  function token() external view returns (address);
-  function checkpoint_token() external;
-  function checkpoint_total_supply() external;
-}
-
 contract FeeCollector is AutomationCompatibleInterface, OwnableUpgradeable {
 
   IRouter public router;
 
   mapping(address => IRouter.route[]) public routes;
   address public receiver;
+  address public target;
   address public automationRegistry;
   address[] public tokens;
   mapping(address => uint256) public lastTrade;
@@ -33,13 +28,15 @@ contract FeeCollector is AutomationCompatibleInterface, OwnableUpgradeable {
 
   function initialize(
     address _router, 
-    address _receiver
+    address _receiver,
+    address _target
   ) initializer public {
     __Ownable_init();
     router = IRouter(_router);
     receiver = _receiver;
-    automationRegistry = address(0x02777053d6764996e594c3E88AF1D58D5363a2e6);
+    automationRegistry = address(0x75c0530885F385721fddA23C539AF3701d6183D4);
     interval = 86400;
+    target = _target;
   }  
 
   function getPeriod() public view returns (uint256) {
@@ -112,9 +109,8 @@ contract FeeCollector is AutomationCompatibleInterface, OwnableUpgradeable {
     external
     onlyOwner()
   {
-    address _target = IRewardsDistributor(receiver).token();
-    require(_token != _target, "Target token not allowed");
-    require(_routes[_routes.length - 1].to == _target, "Receive token should be _target");
+    require(_token != target, "Target token not allowed");
+    require(_routes[_routes.length - 1].to == target, "Receive token should be target");
     removeToken(_token);
 
     for (uint8 i = 0; i < _routes.length; i++) {
@@ -195,10 +191,13 @@ contract FeeCollector is AutomationCompatibleInterface, OwnableUpgradeable {
 
   function withdraw() external {
     require(receiver != address(0), "Zero address not allowed");
-    address _token = IRewardsDistributor(receiver).token();
-    IERC20(_token).transfer(receiver, IERC20(_token).balanceOf(address(this)));
-    IRewardsDistributor(receiver).checkpoint_token();
-    IRewardsDistributor(receiver).checkpoint_total_supply();
+    // TODO !!! transfer to BSC with LayerZero
+    // TODO !!! transfer to BSC with LayerZero
+    // TODO !!! transfer to BSC with LayerZero
+    // address _token = IRewardsDistributor(receiver).token();
+    // IERC20(_token).transfer(receiver, IERC20(_token).balanceOf(address(this)));
+    // IRewardsDistributor(receiver).checkpoint_token();
+    // IRewardsDistributor(receiver).checkpoint_total_supply();
   }
 
   function getRoutes(address _token)

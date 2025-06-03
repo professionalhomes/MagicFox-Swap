@@ -22,7 +22,7 @@ async function main() {
 
     await receiver_bluechip.deployed();
 
-    // console.log("LZReceiver (bluechipVoter) deployed to: %saddress/%s", hre.network.config.explorer, receiver_bluechip.address);
+    console.log("LZReceiver (bluechipVoter) deployed to: %saddress/%s", hre.network.config.explorer, receiver_bluechip.address);
 
     const VOTER = await hre.ethers.getContractAt('VoterV2_1', addresses.voter, deployer);
     const BLUECHIP_VOTER = await hre.ethers.getContractAt('BluechipVoter', addresses.bluechipVoter, deployer);

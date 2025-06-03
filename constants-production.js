@@ -19,18 +19,20 @@ module.exports = {
     veShroom: '0x6a07Cc5C621d8A1f8Ce25f449B49FaAD5dCBb8Ee', 
 
     /* chainlink */
-    chainlinkEpochController: '',
-    chainlinkWeeklyEmissionBridge: '',
+    chainlinkEpochController: '0x7c5106bd2C1cC55b17A0F384B5C7E2C67121CcBA',
+    chainlinkWeeklyEmissionBridge_ARBITRUM: '0xD1Bb06d224d4193D3b8db1558d7e3F2B1711efbE',
+    chainlinkWeeklyEmissionBridge_POLYGON: '0x66D95d405e157fb199565F2fB127453649A3C003',
+    bluechipFeeCollector: '0xa2d23C7Ca6D360D5B0b30CaFF79dbBfa242B4811', 
+    voterFeeClaimer: '0x4a36b507D1b5a17dDFa16044E922D15625871310', 
 
     /* dao */
-    bribeFactory: '', 
-    gaugeFactory: '', 
-    voter: '', // !!!! VERIFY IN CODE HARD-CODED LZ ENDPOINT ADDRESS !!!!
-    bluechipVoter: '',  // !!!! VERIFY IN CODE HARD-CODED LZ ENDPOINT ADDRESS !!!!
-    bluechipFeeCollector: '', 
-    rewardDistributorToken: '', 
-    rewardDistributorUsdc: '', 
-    minter: '', 
+    bribeFactory: '0x2295277c1AE8314387289E7E506407B9332c1500', 
+    gaugeFactory: '0x69B62Fc3Ab3c1571E47CD3bc8A86E91426667914', 
+    voter: '0xF2Fc2b5950f323ad90A210f9f1264392261d3Ae9', // !!!! VERIFY IN CODE HARD-CODED LZ ENDPOINT ADDRESS !!!!
+    bluechipVoter: '0x8C246E013C719070c902544B4d27f104a82A15f9',  // !!!! VERIFY IN CODE HARD-CODED LZ ENDPOINT ADDRESS !!!!
+    rewardDistributorToken: '0xeF6567279F6dF45d01601D78c21BAB3ffc469533', 
+    rewardDistributorUsdc: '0xBd7A8c05D0eB214e3C5cc63D4B77C2Ea38bDe440', 
+    minter: '0x3Ab6c1800B7878be6E890798C9F0282c8AA43E39', 
 
     /* LZ */
     lzChainId: 102,
@@ -59,17 +61,20 @@ module.exports = {
     solidlyLib: '',
 
     /* token */
-    token: '', 
-    veToken: '', 
+    token: '0x84E0a246DD437d911989E89667816A9Ed97a1284', 
+    veToken: '0x4b749A14e8A1cC008eD7c89F7652537065191bbd', 
+
+    /* chainlink */
+    bluechipFeeCollector: '0xfC282bc7004DF6d1ec342A676354575dcd4EE974', 
+    voterFeeClaimer: '0x2746655AfE725CA114a45D3fadF08f10fB0bb57a', 
 
     /* dao */
-    bribeFactory: '', 
-    gaugeFactory: '', 
-    voter: '',
-    bluechipVoter: '',
-    bluechipFeeCollector: '', 
-    lzReceiver: '', 
-    lzReceiverBluechip: '', 
+    bribeFactory: '0x298e40a026F4db34b57CBDB7c5F22f2d9BaF935d', 
+    gaugeFactory: '0xd614F630F18602dDd08b41728058E94427475cd5', 
+    voter: '0x6a07Cc5C621d8A1f8Ce25f449B49FaAD5dCBb8Ee',
+    bluechipVoter: '0xcb8Edbe8028A026cED02b1160e43166B62305beF',
+    lzReceiver: '0xAFD9748AAD1ceC527723f5104B9D9Ad94d7DE0A7', 
+    lzReceiverBluechip: '0x2498F6668b7970F42e4AB93d50E501e5ed513264', 
 
     /* LZ */
     lzChainId: 110,
@@ -95,17 +100,20 @@ module.exports = {
     solidlyLib: '',
 
     /* token */
-    token: '', 
-    veToken: '', 
+    token: '0x84E0a246DD437d911989E89667816A9Ed97a1284', 
+    veToken: '0x851e951FD4Fb85710002C76376F7Fd5d9cff61A4', 
+
+    /* chainlink */
+    bluechipFeeCollector: '0xeBF77693c6531546E79c2D3426D541270bCDb434', 
+    voterFeeClaimer: '0xC82AAfB906ecB40f3cfF3675391f0b370c66afcf', 
 
     /* dao */
     bribeFactory: '', 
-    gaugeFactory: '', 
-    voter: '',
-    bluechipVoter: '',
-    bluechipFeeCollector: '', 
-    lzReceiver: '', 
-    lzReceiverBluechip: '', 
+    gaugeFactory: '0x79c86a3E7921Bea8b2344eDB0A34Ef1e22aa73C8', 
+    voter: '0xfC282bc7004DF6d1ec342A676354575dcd4EE974',
+    bluechipVoter: '0x41c42D2AA40013962d1C184a47606e4718259ff8',
+    lzReceiver: '0x6a07Cc5C621d8A1f8Ce25f449B49FaAD5dCBb8Ee', 
+    lzReceiverBluechip: '0xcb8Edbe8028A026cED02b1160e43166B62305beF', 
 
     /* LZ */
     lzChainId: 109,
@@ -119,7 +127,7 @@ module.exports = {
     wnative: '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
     wmatic: '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
     usdt: '',
-    usdc: '',
+    usdc: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
 
     /* LPs */
   }

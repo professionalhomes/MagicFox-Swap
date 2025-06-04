@@ -61,6 +61,8 @@ module.exports = {
     foxLP_volatile_usdt_btcb: '0xE88D98F83bc8299bf52e6A321C1c7E537dF08735',
     foxLP_volatile_usdt_wbnb: '0x1ddE57c0f9303bACc816BDB1AEca22d5aF79f385',
     foxLP_stable_usdt_usdc: '0xeEbAEF9b4762F405c20FB816370F9634C1A819F6',
+    foxLP_volatile_fox_wbnb: '0xff657bF9B1e70338c88C6a42ca3613F749C5A26e',
+    foxLP_volatile_shroom_wbnb: '0x0a1C016180753b31F1f148cfBE64BfEbADCFBEc1',
   },
 
   ARBITRUM: {

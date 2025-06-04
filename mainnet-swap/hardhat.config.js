@@ -17,6 +17,7 @@ module.exports = {
     apiKey: {
        bsc: secret.bscScanAPI,
        arbitrumOne: secret.arbScanAPI,
+       polygon: secret.polyScanAPI,
      }
   },
     // solidity: "0.6.12",

@@ -138,6 +138,22 @@ module.exports = {
       chainId: constants.POLYGON.lzChainId,
       sideGauge: '0x077491c81319205CA7Cd61ed9751CE91276fFCFf',
     },
+    pool24: {
+      // foxLP_volatile_deus_wbnb
+      gauge: '0x8fd9b79Db670dd12B2B22A161A517dD0abFD5F5C',
+    },
+    pool25: {
+      // ARBITRUM vAMM_DEUS_WETH
+      gauge: '0x47bc7670dA52cc1B6e877B8E2ACf28CD113E7F51',
+      chainId: constants.ARBITRUM.lzChainId,
+      sideGauge: '0x300e0370D952d0118889840A22a8774711a049b8',
+    },
+    pool26: {
+      // POLYGON vAMM_DEUS_WMATIC
+      gauge: '0x27dF46E24fBf9dA95e844Ae9e3f09566BED2E06b',
+      chainId: constants.POLYGON.lzChainId,
+      sideGauge: '0xa3F64FE55fA0084ff4C3aA874a3e13A0a04393f7',
+    },
   },
 
   /**

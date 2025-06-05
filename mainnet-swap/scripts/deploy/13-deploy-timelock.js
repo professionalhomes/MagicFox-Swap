@@ -4,7 +4,7 @@ async function main() {
     [deployer] = await hre.ethers.getSigners()
     const ContractF = await hre.ethers.getContractFactory("MagicFoxTimelock");
     const contr = await ContractF.deploy(
-        30, // minDelay 30sec
+        21600, // minDelay 30sec
         [deployer.address], // proposers
         [deployer.address], // executors
         deployer.address, // admin

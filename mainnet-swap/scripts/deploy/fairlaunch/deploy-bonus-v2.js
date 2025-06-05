@@ -2,17 +2,18 @@ const hre = require("hardhat");
 
 async function main() {
     const addresses = hre.network.config.constants;
-    const ContractF = await hre.ethers.getContractFactory("MagicZap");
+    const ContractF = await hre.ethers.getContractFactory("LockWithBonus");
     const contr = await ContractF.deploy(
-        addresses.swapRouter,
-        addresses.fairlaunchBonusTreasury,
+        addresses.token,
         addresses.veToken,
-        addresses.veShroom
+        addresses.shroom,
+        addresses.veShroom,
+        addresses.fairlaunchBonusTreasury
     );
 
     await contr.deployed();
 
-    console.log("MagicZap deployed to: %saddress/%s", hre.network.config.explorer, contr.address);
+    console.log("LockWithBonus deployed to: %saddress/%s", hre.network.config.explorer, contr.address);
 }
 
 main()

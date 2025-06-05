@@ -12,20 +12,16 @@ import "./interfaces/IGauge.sol";
 import "./interfaces/IVotingEscrow.sol";
 import "hardhat/console.sol";
 
-contract MagicZap is Ownable, ReentrancyGuard {
+contract MagicZap is ReentrancyGuard {
   using SafeERC20 for IERC20;
 
   IRouter public router;
   address public wnative;
   IPairFactory public factory;
-  IVotingEscrow public immutable VE_FOX; // veFOX token contract
-  IVotingEscrow public immutable VE_SHROOM; // veSHROOM token contract
-  IERC20 public immutable FOX; // FOX token contract
-  IERC20 public immutable SHROOM; // SHROOM token contract
-
-  address public immutable treasury; 
-  uint8 public bonus = 30; // 30%
-  uint internal constant WEEK = 1 weeks;
+  IVotingEscrow public VE_FOX; // veFOX token contract
+  IVotingEscrow public VE_SHROOM; // veSHROOM token contract
+  IERC20 public FOX; // FOX token contract
+  IERC20 public SHROOM; // SHROOM token contract
 
   struct BalanceLocalVars {
     uint256 amount0;
@@ -42,22 +38,20 @@ contract MagicZap is Ownable, ReentrancyGuard {
 
   constructor(
     address _router,
-    address _treasury,
     IVotingEscrow veFoxToken,
     IVotingEscrow veShroomToken
   ) {
     router = IRouter(_router);
     factory = IPairFactory(router.factory());
     wnative = router.weth();
-    treasury = _treasury;
-    VE_FOX = veFoxToken;
-    VE_SHROOM = veShroomToken;
-    SHROOM = IERC20(VE_SHROOM.token());
-    FOX = IERC20(VE_FOX.token()); 
+    // VE_FOX = veFoxToken;
+    // VE_SHROOM = veShroomToken;
+    // SHROOM = IERC20(VE_SHROOM.token());
+    // FOX = IERC20(VE_FOX.token()); 
 
-    // set max approval for veFOX/veSHROOM locking
-    FOX.approve(address(VE_FOX), type(uint256).max);
-    SHROOM.approve(address(VE_SHROOM), type(uint256).max);
+    // // set max approval for veFOX/veSHROOM locking
+    // FOX.approve(address(VE_FOX), type(uint256).max);
+    // SHROOM.approve(address(VE_SHROOM), type(uint256).max);
   }
 
   /// @dev The receive method is used as a fallback function in a contract
@@ -227,18 +221,6 @@ contract MagicZap is Ownable, ReentrancyGuard {
       vars.balanceBefore = _getBalance(FOX);
       router.swapExactTokensForTokens(vars.amount0, minAmounts[0], pathVeFox, address(this), deadline);
       vars.amount0 = _getBalance(FOX) - vars.balanceBefore;
-      
-      // Add check for bonus
-      if (bonus > 0) {
-        uint unlock_time = (block.timestamp + stakeLength) / WEEK * WEEK; // Locktime is rounded down to weeks
-        if (unlock_time > block.timestamp + 356 days) {
-          // Add bonus
-          uint256 veTokenBonus = vars.amount0 * bonus / 100;
-          FOX.safeTransferFrom(treasury, address(this), veTokenBonus);
-          vars.amount0 += veTokenBonus;
-        }
-      }
-      
       VE_FOX.create_lock_for(vars.amount0, stakeLength, to);
     }
 
@@ -250,18 +232,6 @@ contract MagicZap is Ownable, ReentrancyGuard {
       vars.balanceBefore = _getBalance(SHROOM);
       router.swapExactTokensForTokens(vars.amount1, minAmounts[1], pathVeShroom, address(this), deadline);
       vars.amount1 = _getBalance(SHROOM) - vars.balanceBefore;
-
-      // Add check for bonus
-      if (bonus > 0) {
-        uint unlock_time = (block.timestamp + stakeLength) / WEEK * WEEK; // Locktime is rounded down to weeks
-        if (unlock_time > block.timestamp + 356 days) {
-          // Add bonus
-          uint256 veTokenBonus = vars.amount1 * bonus / 100;
-          SHROOM.safeTransferFrom(treasury, address(this), veTokenBonus);
-          vars.amount1 += veTokenBonus;
-        }
-      }
-
       VE_SHROOM.create_lock_for(vars.amount1, stakeLength, to);
     }
   }
@@ -441,13 +411,5 @@ contract MagicZap is Ownable, ReentrancyGuard {
     } else {
       IERC20(token).safeTransfer(msg.sender, amount);
     }
-  }
-
-  function setBonus(uint8 _bonus)
-    external
-    onlyOwner()
-  {
-    require(_bonus >= 0 && _bonus <= 100, "bonus can be in range 0 - 100");
-    bonus = _bonus;
   }
 }

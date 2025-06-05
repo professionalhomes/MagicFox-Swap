@@ -5,7 +5,7 @@ async function main() {
     const ContractF = await hre.ethers.getContractFactory("FairlaunchZap");
     const contr = await ContractF.deploy(
         addresses.wnative,
-        addresses.usdc,
+        addresses.wbnb,
     );
 
     await contr.deployed();

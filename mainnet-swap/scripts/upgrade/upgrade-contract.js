@@ -9,8 +9,8 @@ const addresses = hre.network.config.constants;
   *  Set below 2 parameters
   */
 
-const PROXY = addresses.voter;
-const CONTRACT_TO_UPGRADE = 'VoterV2_1';
+const PROXY = addresses.bluechipFeeCollector;
+const CONTRACT_TO_UPGRADE = 'FeeCollector';
 
 /*********************************************************************************************************/
 

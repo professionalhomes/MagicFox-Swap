@@ -1,43 +1,39 @@
 const hre = require("hardhat");
 
-module.exports = [
-    '0xB48837F0C05c0931c7B3DcFDceA0365396c39F3A', // address _token, 
-    hre.ethers.constants.AddressZero, // address _saleToken, 
-    hre.ethers.utils.parseUnits("100"), // uint256 _softCap, 
-    hre.ethers.utils.parseUnits("200"), // uint256 _hardCap, 
-    hre.ethers.utils.parseUnits("0.0001"), // uint256 _pricePerToken, 
-    '1686125812', // uint256 _startTime, 
-    '1686143812', // uint256 _endTime,
-    '0x16a22488426742CDe589BC1D299D55BfaF28093d', // address _treasury
-]
+async function main() {
+    const addresses = hre.network.config.constants;
+    const ContractF = await hre.ethers.getContractFactory("Presale");
 
-// async function main() {
-//     const addresses = hre.network.config.constants;
-//     const ContractF = await hre.ethers.getContractFactory("Presale");
+    /* 
+    token address: 0x094A5976E0696D27fe25DF02bFEEEcDEEDC3299e
+    softcap: 4 BNB
+    hardcap: 10 BNB
+    price per token: 0.000001
+    Start time: Friday, June 16, 2023 10:00:00 AM
+    End time: Friday, June 23, 2023 10:00:00 AM
+    Treasury: 0xfbc387F3EAF7d5AB0BF7b1DA2f04715d60721c0f
+    */
 
-//     console.log("REMOVE TESTING FUNCTIONS !!!");
-//     console.log("REMOVE TESTING FUNCTIONS !!!");
-//     console.log("REMOVE TESTING FUNCTIONS !!!");
+    const contr = await ContractF.deploy(
+        '0x094A5976E0696D27fe25DF02bFEEEcDEEDC3299e', // address _token, 
+        addresses.wbnb, // address _saleToken, 
+        hre.ethers.utils.parseUnits("4000000"), // uint256 _softCap, soft cap: 4.000.000
+        hre.ethers.utils.parseUnits("10000000"), // uint256 _hardCap, hard cap: 10.000.000
+        hre.ethers.utils.parseUnits("0.000001"), // uint256 _pricePerToken, 
+        '1686909600', // uint256 _startTime, 
+        '1687514400', // uint256 _endTime,
+        '0xfbc387F3EAF7d5AB0BF7b1DA2f04715d60721c0f', // address _treasury
+        '0x1bd99249fB4dd646b0a9a7e8d77fAeC4124f75eA', // ZAP
+    );
 
-//     const contr = await ContractF.deploy(
-//         '0xB48837F0C05c0931c7B3DcFDceA0365396c39F3A', // address _token, 
-//         hre.ethers.constants.AddressZero, // address _saleToken, 
-//         hre.ethers.utils.parseUnits("100"), // uint256 _softCap, 
-//         hre.ethers.utils.parseUnits("200"), // uint256 _hardCap, 
-//         hre.ethers.utils.parseUnits("0.0001"), // uint256 _pricePerToken, 
-//         '1686125812', // uint256 _startTime, 
-//         '1686143812', // uint256 _endTime,
-//         '0x16a22488426742CDe589BC1D299D55BfaF28093d', // address _treasury
-//     );
+    await contr.deployed();
 
-//     await contr.deployed();
+    console.log("Presale deployed to: %saddress/%s", hre.network.config.explorer, contr.address);
+}
 
-//     console.log("Presale deployed to: %saddress/%s", hre.network.config.explorer, contr.address);
-// }
-
-// main()
-//     .then(() => process.exit(0))
-//     .catch(error => {
-//         console.error(error);
-//         process.exit(1);
-//     });
+main()
+    .then(() => process.exit(0))
+    .catch(error => {
+        console.error(error);
+        process.exit(1);
+    });

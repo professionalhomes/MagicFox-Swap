@@ -220,6 +220,10 @@ module.exports = {
       // foxLP_vAMM_WBNB_CHAM
       gauge: '0xd6623315bFC6484C4aa78d083A23959DD96DB7c3',
     },
+    pool40: {
+      // foxLP_vAMM_ACS_acsFOX
+      gauge: '0xed8bd3398d1f6B251Fc3bE3932299f2896bF0119',
+    },
   },
 
   /**
@@ -229,45 +233,45 @@ module.exports = {
     pool0: {
       // foxLP_volatile_usdt_wbnb
       gauge: '0x97c93d2144521C6b834f5021b3E93e5c56B86Bc1',
-      allocPts: 2150,
+      allocPts: 150,
     },
     pool1: {
       // foxLP_stable_usdt_usdc
       gauge: '0x53B3cAC5D3A63b85B04b726810255a15Eeb60a44',
-      allocPts: 2150,
+      allocPts: 150,
     },
     pool2: {
       // ARBITRUM vAMM_WETH_USDC
       gauge: '0xff233980047a44D5bA0DCcDaE33FEBe6Aca523B1',
       chainId: constants.ARBITRUM.lzChainId,
       sideGauge: '0xa9Ed92b6Bf0B6232D6F98fA120177A89550FC8D3',
-      allocPts: 400,
+      allocPts: 30,
     },
     pool3: {
       // ARBITRUM sAMM_USDT_USDC
       gauge: '0x6Ae02ff4aE055E71D1c6343FC60cE611eFcAA53E',
       chainId: constants.ARBITRUM.lzChainId,
       sideGauge: '0x52817053E8f5Dd6dc00672112cf1897c92835ef2',
-      allocPts: 1300,
+      allocPts: 30,
     },
     pool4: {
       // POLYGON vAMM_WMATIC_USDC
       gauge: '0xb2b862403D587aDafD2DD98fB6202388A0bCef06',
       chainId: constants.POLYGON.lzChainId,
       sideGauge: '0x63b8A1BccF0dC58c61e9A77A13e96ce9E0484e36',
-      allocPts: 500,
+      allocPts: 20,
     },
     pool5: {
       // POLYGON sAMM_USDC_USDT
       gauge: '0x98F590D08412f374AAFfd4F0F35870397F59108c',
       chainId: constants.POLYGON.lzChainId,
       sideGauge: '0xeEb86A2773EadC03380D3682508eae75F4bc5366',
-      allocPts: 500,
+      allocPts: 20,
     },
     pool6: {
       // foxLP_volatile_fox_wbnb
       gauge: '0x61875aB2586E72988d363Ff722544e7aBf6aE1B5',
-      allocPts: 3000,
+      allocPts: 600,
     },
     pool7: {
       // foxLP_volatile_shroom_wbnb

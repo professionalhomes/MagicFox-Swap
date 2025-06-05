@@ -11,6 +11,19 @@ interface IToken {
   function decimals() external returns (uint8);
 }
 
+interface IBNB {
+  function deposit() external payable;
+}
+
+interface IZap {
+  function convert(
+    address buyer,
+    address inputToken, 
+    uint256 inputAmount, 
+    address[] calldata path
+  ) external payable returns (uint256);
+}
+
 contract Presale is Ownable, ReentrancyGuard {
   using SafeERC20 for IERC20;
 
@@ -28,6 +41,9 @@ contract Presale is Ownable, ReentrancyGuard {
 
   uint256 public soldAmount; // should be <= HARDCAP
 
+  address public constant WBNB = 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c;
+  IZap public immutable zap;
+
   struct UserInfo {
     uint256 quantity;
     uint256 amount;
@@ -44,9 +60,11 @@ contract Presale is Ownable, ReentrancyGuard {
     uint256 _pricePerToken, 
     uint256 _startTime, 
     uint256 _endTime,
-    address _treasury
+    address _treasury,
+    IZap zap_
   ) {
     require(_hardCap > _softCap);
+    require(address(zap_) != address(0), "invalid zap");
     TOKEN = _token;
     SALE_TOKEN = _saleToken;
 
@@ -58,11 +76,10 @@ contract Presale is Ownable, ReentrancyGuard {
     END_TIME = _endTime;
 
     TREASURY = _treasury;
+    zap = zap_;
 
     require(IToken(TOKEN).decimals() == 18);
-    if (SALE_TOKEN != address(0)) {
-      require(IToken(SALE_TOKEN).decimals() == 18);
-    }
+    require(IToken(SALE_TOKEN).decimals() == 18);
   }
 
   function availableTokens() public view returns (uint256) {
@@ -82,30 +99,58 @@ contract Presale is Ownable, ReentrancyGuard {
   }
 
   function totalContributed() public view returns (uint256) {
-    return SALE_TOKEN == address(0) ? address(this).balance : IERC20(SALE_TOKEN).balanceOf(address(this));
+    return IERC20(SALE_TOKEN).balanceOf(address(this));
+  }
+
+  function zapAndBuy(
+    address inputToken, 
+    uint256 inputAmount, 
+    address[] calldata path
+  ) external payable nonReentrant {
+    require(isSaleActive(), "Sale not active");
+
+    // All check are done in ZAP. Zap is used to never mix investments with converts
+    uint256 amount = zap.convert{value: msg.value}(
+      msg.sender,
+      inputToken,
+      inputAmount,
+      path
+    );
+
+    IERC20(SALE_TOKEN).safeTransferFrom(address(zap), address(this), amount);
+
+    _buy(amount);
   }
 
   function buy(uint256 amount) external payable nonReentrant {
     require(isSaleActive(), "Sale not active");
 
+    if (msg.value > 0) {
+      require(SALE_TOKEN == WBNB, "SALE_TOKEN not WBNB");
+      IBNB(WBNB).deposit{value: msg.value}();
+      amount = msg.value;
+    } else {
+      IERC20(SALE_TOKEN).safeTransferFrom(msg.sender, address(this), amount);
+    }
+    
+    _buy(amount);
+  }
+
+  function _buy(uint256 amount) private {
+    require(amount > 0, "buy: zero amount");
+
     uint256 quantity = amount * 1e18 / PRICE_PER_TOKEN;
     uint256 max = availableTokens();
+    uint256 inputAmount = amount;
     if (quantity > max){
       quantity = max;
       amount = quantity * PRICE_PER_TOKEN / 1e18;
     }
 
-    if (SALE_TOKEN == address(0)){
-      require(msg.value >= amount, "Incorrect BNB amount");
-
-      uint256 leftover = msg.value - amount;
-      if (leftover > 0) {
-        (bool success, ) = msg.sender.call{value: leftover}("");
-        require(success, "msg.sender rejected transfer");
-      }
-
-    } else {
-      IERC20(SALE_TOKEN).safeTransferFrom(msg.sender, address(this), amount);
+    uint256 leftover = inputAmount - amount;
+    if (leftover > 0) {
+      // return leftover
+      IERC20(SALE_TOKEN).safeTransfer(msg.sender, leftover);
     }
 
     soldAmount += quantity;
@@ -114,7 +159,7 @@ contract Presale is Ownable, ReentrancyGuard {
     userInfo[msg.sender].amount += amount;
   }
 
-  function claim() external {
+  function claim() external nonReentrant {
     require(hasEnded(), "not ended yet");
 
     UserInfo memory user = userInfo[msg.sender];
@@ -130,13 +175,7 @@ contract Presale is Ownable, ReentrancyGuard {
       IERC20(TOKEN).safeTransfer(msg.sender, user.quantity);
     } else {
       // return sale tokens
-      if (SALE_TOKEN == address(0)){
-        (bool succ, ) = msg.sender.call{value: user.amount}("");
-        require(succ, "msg.sender rejected transfer");
-
-      } else {
-        IERC20(SALE_TOKEN).safeTransfer(msg.sender, user.amount);
-      }
+      IERC20(SALE_TOKEN).safeTransfer(msg.sender, user.amount);
     }
   }
 
@@ -147,13 +186,7 @@ contract Presale is Ownable, ReentrancyGuard {
     bool success = soldAmount >= SOFTCAP;
 
     if (success) {
-      if (SALE_TOKEN == address(0)){
-        (bool succ, ) = TREASURY.call{value: address(this).balance}("");
-        require(succ, "TREASURY rejected transfer");
-
-      } else {
-        IERC20(SALE_TOKEN).safeTransfer(TREASURY, IERC20(SALE_TOKEN).balanceOf(address(this)));
-      }
+      IERC20(SALE_TOKEN).safeTransfer(TREASURY, IERC20(SALE_TOKEN).balanceOf(address(this)));
 
       // Also transfer unsold tokens
       IERC20(TOKEN).safeTransfer(TREASURY, availableTokens());
@@ -162,21 +195,6 @@ contract Presale is Ownable, ReentrancyGuard {
       // Return all tokens to treasury
       IERC20(TOKEN).safeTransfer(TREASURY, IERC20(TOKEN).balanceOf(address(this)));
     }
-  }
-
-  // BELOW - ONLY FOR TESTING !!!
-  // BELOW - ONLY FOR TESTING !!!
-  // BELOW - ONLY FOR TESTING !!!
-  // BELOW - ONLY FOR TESTING !!!
-  // BELOW - ONLY FOR TESTING !!!
-  // BELOW - ONLY FOR TESTING !!!
-
-  function setTime(
-    uint256 _startTime, 
-    uint256 _endTime
-  ) external {
-    START_TIME = _startTime;
-    END_TIME = _endTime;
   }
 
 }

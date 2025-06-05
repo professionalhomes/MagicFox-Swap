@@ -199,6 +199,7 @@ contract RewardsDistributor is IRewardsDistributor {
         IVotingEscrow.Point memory old_user_point;
 
         for (uint i = 0; i < 50; i++) {
+            // could be here... change >= to >
             if (week_cursor >= _last_token_time) break;
 
             if (week_cursor >= user_point.ts && user_epoch <= max_user_epoch) {

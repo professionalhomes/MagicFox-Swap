@@ -2,15 +2,16 @@ const hre = require("hardhat");
 
 async function main() {
     const addresses = hre.network.config.constants;
-    const ContractF = await hre.ethers.getContractFactory("FairlaunchZap");
+    const ContractF = await hre.ethers.getContractFactory("MagicZap");
     const contr = await ContractF.deploy(
-        addresses.wnative,
-        addresses.wbnb,
+        addresses.swapRouter,
+        hre.ethers.constants.AddressZero,
+        hre.ethers.constants.AddressZero
     );
 
     await contr.deployed();
 
-    console.log("FairlaunchZap deployed to: %saddress/%s", hre.network.config.explorer, contr.address);
+    console.log("MagicZap deployed to: %saddress/%s", hre.network.config.explorer, contr.address);
 }
 
 main()

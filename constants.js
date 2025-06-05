@@ -18,6 +18,7 @@ module.exports = {
     treasury: '0x0b013649982c9f2623eC15d4fFF62EC1cB6Dc8e5', 
     shroom: '0x967F4B82D8B7eD38f655CCf084150180c8165AC5', 
     veShroom: '0x6a07Cc5C621d8A1f8Ce25f449B49FaAD5dCBb8Ee', 
+    lockWithBonus: '0xC8bD551A4C245640B137e8Cf9C7cAE8D46ac956e',
 
     /* chainlink */
     chainlinkEpochController: '0x7c5106bd2C1cC55b17A0F384B5C7E2C67121CcBA',
@@ -40,8 +41,9 @@ module.exports = {
     lzEndpoint: '0x3c2269811836af69497E5F486A85D7316753cf62',
 
     /* UpgradableContracts admin */
-    timelocker: '',
-    proxyAdmin: '', // still need to transfer ownership from deployer to timelocker
+    // timelocker_30sec_old: '0xa14F352937CB267aD61dbEEc915240b9dff7623c',
+    timelocker: '0x56c11006Fce73A07A39C06ef6Efa0bc226035fD6',
+    proxyAdmin: '0xd053a8E6D2bEA3c5b32E20E6c0D96dda2fbD0621', // still need to transfer ownership from deployer to timelocker
 
     /* ERC20 */
     wnative: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
@@ -64,6 +66,16 @@ module.exports = {
     foxLP_volatile_fox_wbnb: '0xff657bF9B1e70338c88C6a42ca3613F749C5A26e',
     foxLP_volatile_shroom_wbnb: '0x0a1C016180753b31F1f148cfBE64BfEbADCFBEc1',
     foxLP_volatile_deus_wbnb: '0x98AA725bC37Cc50Ab2561d606F90E409Fd2c18EF',
+    foxLP_volatile_TAROT_WBNB: '0x4959636B031cb34B22229d8305aad79EA6339736',
+    'foxLP_stable_USDT+_USD+': '0xA72D2aEAD2bcf791D608D99749EfE5de5b15f65A',
+    foxLP_vAMM_WBNB_RDNT: '0x43a2A3D8dC4f261255470234d034c8527c37D261',
+    foxLP_vAMM_ETH_BUSD: '0xd26e08138e4522FCB2158645adBA3CA51Dd40737',
+    foxLP_vAMM_ETH_BTCB: '0x60aD4FA48C51C01a1DE5f9e5834632F6DD5DC1d2',
+    foxLP_vAMM_WBNB_CHAM: '0x716E1D30804f55a87E5AD9cBA47c4aE8e7506C42',
+    foxLP_vAMM_ACS_acsFOX: '0x5c45E6a7b858a7865717542a30f1B98753DE8b90',
+
+    /* launchpad */
+    presale_pepeGeneral: '0x742Ca2D6b69F1cdbCaec94E12c9219159aF0630E',
   },
 
   ARBITRUM: {
@@ -92,8 +104,8 @@ module.exports = {
     lzEndpoint: '0x3c2269811836af69497E5F486A85D7316753cf62',
 
     /* UpgradableContracts admin */
-    timelocker: '',
-    proxyAdmin: '', // still need to transfer ownership from deployer to timelocker
+    timelocker: '0x4F9DB343b8b1091C19DF71472E335B22aADFA0cF',
+    proxyAdmin: '0x79c86a3E7921Bea8b2344eDB0A34Ef1e22aa73C8', // still need to transfer ownership from deployer to timelocker
 
     /* ERC20 */
     wnative: '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1',
@@ -115,6 +127,10 @@ module.exports = {
     vAMM_WETH_USDC: '0x46afC3281A3121Eb8a08B2862BC0C7CA50618de2',
     sAMM_USDT_USDC: '0x10a5fc88f7478DFB24a602856E3B273f317dbc17',
     vAMM_DEUS_WETH: '0x628c1BfA62a69750088d16fE85C2C69528350080',
+    sAMM_USX_USDC:	'0xF6e1C3f6c6c63C382a9c4c67421b29835b2D7e79',
+    vAMM_TAROT_WETH:	'0x0CfF85A3BeA3575c7A4AFBF850C565c509Be0d88',
+    'sAMM_USD+_DAI+':	'0xb5218593C5d7fcdb4Ae0C11B30d9181dfE010bBD',
+    vAMM_RDNT_WETH:	'0x5EbE7e3Da5D4E28F29D228F1E9389f19f09248dc',
   },
 
   POLYGON: {
@@ -143,8 +159,8 @@ module.exports = {
     lzEndpoint: '0x3c2269811836af69497E5F486A85D7316753cf62',
 
     /* UpgradableContracts admin */
-    timelocker: '',
-    proxyAdmin: '', // still need to transfer ownership from deployer to timelocker
+    timelocker: '0xe6929972bFae2B5dd951573c92df78963236Ae40',
+    proxyAdmin: '0xCAB0838EAF7C34ba8C6713b7f395c36df33A1c54', // still need to transfer ownership from deployer to timelocker
 
     /* ERC20 */
     wnative: '0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270',
@@ -164,5 +180,8 @@ module.exports = {
     vAMM_WMATIC_USDC : '0x512a4740EAD442EC88529043DE7297e3921A21bB',
     sAMM_USDC_USDT: '0xdBD885Cc88e1913302396c7d5eb6Ce3157D406cA',
     vAMM_DEUS_WMATIC: '0x8c53a84B16c3e477dFf14a12F416C52D0f1aDc63',
+    vAMM_ACS_WMATIC: '0x742379245549d7367168bB4589E506F6D4af436B',
+    vAMM_USDC_SPHERE:	'0xe4B98AA895390e17AE482a36A99C526F01b3d278',
+    vAMM_WMATIC_PolyDoge: '0x86c5FF0729801be567038ec0e91B2D6A5b212f4E',
   }
 };

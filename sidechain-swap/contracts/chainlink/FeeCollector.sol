@@ -211,4 +211,8 @@ contract FeeCollector is AutomationCompatibleInterface, OwnableUpgradeable {
   fallback() external payable {}
 
   receive() external payable {}
+
+  function withdrawERC20(address _token, address _recipient) external onlyOwner {
+    IERC20(_token).transfer(_recipient, IERC20(_token).balanceOf(address(this)));
+  }
 }

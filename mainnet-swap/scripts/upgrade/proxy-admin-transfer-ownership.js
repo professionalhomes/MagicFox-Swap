@@ -6,39 +6,27 @@ const proxyAdminABI = require('./abi-proxy-admin');
 const addresses = hre.network.config.constants;
 
 /** 
-  *  Set below 2 parameters
+  *  Set below 1 parameter
   */
 
-const PROXY = addresses.bluechipFeeCollector;
-const CONTRACT_TO_UPGRADE = 'FeeCollector';
+const newTimelocker = addresses.new_timelocker;
 
 /*********************************************************************************************************/
 
 const timelockerAddress = addresses.timelocker;
 
-const fileName = `.tmp_salts/.tmp_upgrade_${CONTRACT_TO_UPGRADE}.json`;
+const fileName = `.tmp_salts/.tmp_proxyAdmin_transferOwnership.json`;
 
 async function upgradeSchedule (timelocker) {
-  // First deploy new implementation
-  const ContractF = await hre.ethers.getContractFactory(CONTRACT_TO_UPGRADE);
-  const newImplementation = await ContractF.deploy();
-  await newImplementation.deployed();
-  // const newImplementation = {
-  //   address: '0xC34E12175D25B79c958aD32360cF92D8a3Fc0D8f'
-  // }
-
-  // console.log("newImplementation deployed to: %saddress/%s", hre.network.config.explorer, newImplementation.address);
-
   const signer = (await hre.ethers.getSigners())[0];
   const targetContract = new hre.ethers.Contract(addresses.proxyAdmin, proxyAdminABI, signer);
 
-  // const tokenContract = await hre.ethers.getContractAt('MasterChef', farmAddress);
   const timeLockerContract = await hre.ethers.getContractAt('MagicFoxTimelock', timelocker, signer);
 
   let interfaceStrategy = targetContract.interface;
   let calldata = interfaceStrategy.encodeFunctionData(
-    "upgrade", 
-    [PROXY, newImplementation.address]
+    "transferOwnership", 
+    [newTimelocker]
   );
   
   let randomBytes = hre.ethers.utils.randomBytes(32);
@@ -53,9 +41,8 @@ async function upgradeSchedule (timelocker) {
     tmp = JSON.parse(rawTmp);
   }
 
-  tmp.proxy = PROXY;
-  tmp.contract = CONTRACT_TO_UPGRADE;
-  tmp.newImplementation = newImplementation.address;
+  tmp.proxyAdmin = addresses.proxyAdmin;
+  tmp.newTimelocker = newTimelocker;
   tmp.value = value;
   tmp.calldata = calldata;
   tmp.predecessor = predecessor;
@@ -64,9 +51,8 @@ async function upgradeSchedule (timelocker) {
 
 
   console.log('\nCreated: %s', new Date());
-  console.log('proxy: %s', PROXY);
-  console.log('contract: %s', CONTRACT_TO_UPGRADE);
-  console.log('newImplementation: %s', newImplementation.address);
+  console.log('proxyAdmin: %s', addresses.proxyAdmin);
+  console.log('newTimelocker: %s', newTimelocker);
   console.log('Predecessor: %s', predecessor);
   console.log('Salt: %s', salt);
 
@@ -89,7 +75,7 @@ async function upgradeSchedule (timelocker) {
       salt,
       delay,
     );
-    console.log("Schedule upgrade: %stx/%s", hre.network.config.explorer, transaction.hash);
+    console.log("Schedule proxyAdmin transferOwnership: %stx/%s", hre.network.config.explorer, transaction.hash);
   } else {
     console.log("Aborting schedule.");
   }
@@ -99,9 +85,8 @@ async function upgradeExecute (tmp, timelockerAddress) {
   const signer = (await hre.ethers.getSigners())[0]
   const timelocker = await hre.ethers.getContractAt('MagicFoxTimelock', timelockerAddress, signer);
 
-  console.log('proxy: %s', tmp.proxy);
-  console.log('contract: %s', tmp.contract);
-  console.log('newImplementation: %s', tmp.newImplementation);
+  console.log('proxyAdmin: %s', tmp.proxyAdmin);
+  console.log('newTimelocker: %s', tmp.newTimelocker);
   console.log('Salt: %s', tmp.salt);
 
   let succ = await timelocker.execute(
@@ -111,7 +96,7 @@ async function upgradeExecute (tmp, timelockerAddress) {
     tmp.predecessor,
     tmp.salt
   );
-  console.log("Execute Upgrade: %stx/%s", hre.network.config.explorer, succ.hash);
+  console.log("Execute transferOwnership: %stx/%s", hre.network.config.explorer, succ.hash);
 };
 
 
@@ -137,7 +122,7 @@ async function main() {
       timelockerAddress
     );
   } else if (answer.action == "Execute") {
-    console.log('Upgrade [Execute]:');
+    console.log('transferOwnership [Execute]:');
     await upgradeExecute(tmp, timelockerAddress);
   }
 }

@@ -14,9 +14,9 @@ async function main() {
     let cnt = 0;
     for (pairAddress of pairs) {
       cnt++;
-      // if (cnt < 6) {
-      //   continue;
-      // }
+    //   if (cnt < 8) {
+    //     continue;
+    //   }
       const pair = await hre.ethers.getContractAt('Pair', pairAddress, deployer);
       const symbol = await pair.symbol();
       const tx = await pair.claimOwnerFees();

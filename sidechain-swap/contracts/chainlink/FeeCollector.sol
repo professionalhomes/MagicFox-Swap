@@ -215,4 +215,10 @@ contract FeeCollector is AutomationCompatibleInterface, OwnableUpgradeable {
   function withdrawERC20(address _token, address _recipient) external onlyOwner {
     IERC20(_token).transfer(_recipient, IERC20(_token).balanceOf(address(this)));
   }
+
+  function batchWithdrawERC20(address[] memory _list, address _recipient) external onlyOwner {
+    for (uint i = 0; i < _list.length; i++) {
+      IERC20(_list[i]).transfer(_recipient, IERC20(_list[i]).balanceOf(address(this)));
+    }
+  }
 }

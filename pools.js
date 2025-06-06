@@ -224,6 +224,10 @@ module.exports = {
       // foxLP_vAMM_ACS_acsFOX
       gauge: '0xed8bd3398d1f6B251Fc3bE3932299f2896bF0119',
     },
+    pool41: {
+      // foxLP_vAMM_xSHRAP_ETH
+      gauge: '0x8B4697d0e517e28EE1594195B4D4D1d9F6778011',
+    },
   },
 
   /**
@@ -245,33 +249,33 @@ module.exports = {
       gauge: '0xff233980047a44D5bA0DCcDaE33FEBe6Aca523B1',
       chainId: constants.ARBITRUM.lzChainId,
       sideGauge: '0xa9Ed92b6Bf0B6232D6F98fA120177A89550FC8D3',
-      allocPts: 30,
+      allocPts: 0,
     },
     pool3: {
       // ARBITRUM sAMM_USDT_USDC
       gauge: '0x6Ae02ff4aE055E71D1c6343FC60cE611eFcAA53E',
       chainId: constants.ARBITRUM.lzChainId,
       sideGauge: '0x52817053E8f5Dd6dc00672112cf1897c92835ef2',
-      allocPts: 30,
+      allocPts: 0,
     },
     pool4: {
       // POLYGON vAMM_WMATIC_USDC
       gauge: '0xb2b862403D587aDafD2DD98fB6202388A0bCef06',
       chainId: constants.POLYGON.lzChainId,
       sideGauge: '0x63b8A1BccF0dC58c61e9A77A13e96ce9E0484e36',
-      allocPts: 20,
+      allocPts: 0,
     },
     pool5: {
       // POLYGON sAMM_USDC_USDT
       gauge: '0x98F590D08412f374AAFfd4F0F35870397F59108c',
       chainId: constants.POLYGON.lzChainId,
       sideGauge: '0xeEb86A2773EadC03380D3682508eae75F4bc5366',
-      allocPts: 20,
+      allocPts: 0,
     },
     pool6: {
       // foxLP_volatile_fox_wbnb
       gauge: '0x61875aB2586E72988d363Ff722544e7aBf6aE1B5',
-      allocPts: 600,
+      allocPts: 1000,
     },
     pool7: {
       // foxLP_volatile_shroom_wbnb
